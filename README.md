@@ -8,20 +8,19 @@ The goal is to build an AI companion that people become emotionally attached to.
 
 ---
 
-# Vision
+## Project Vision
 
 The AI is represented by a **living pixel canvas**.
 
 The canvas has two modes.
 
-## Companion Mode
+### Companion Mode
 
 Default mode.
 
 The canvas only displays the AI's pixel face.
 
-Capabilities
-
+Capabilities:
 - Blink
 - Smile
 - Think
@@ -32,54 +31,35 @@ Capabilities
 
 The face should always feel alive.
 
----
+### Story Mode
 
-## Story Mode
+When storytelling begins, the face transforms into a cinematic pixel movie.
 
-When storytelling begins,
-
-the face transforms into a cinematic pixel movie.
-
-Flow
-
+Flow:
+```
 AI Face
-
-↓
-
+    ↓
 Pixel Dissolve
-
-↓
-
+    ↓
 Story Scene 1
-
-↓
-
+    ↓
 Story Scene 2
-
-↓
-
-Story Scene 3
-
-↓
-
+    ↓
+...
 Story End
-
-↓
-
+    ↓
 Pixels merge
-
-↓
-
+    ↓
 AI Face
+```
 
 Every paragraph of the story becomes one visual scene.
 
 ---
 
-# Product Goal
+## Product Goal
 
-Create an AI that users enjoy talking to for hours because of
-
+Create an AI that users enjoy talking to for hours because of:
 - personality
 - visual expressions
 - storytelling
@@ -88,359 +68,137 @@ Create an AI that users enjoy talking to for hours because of
 
 ---
 
-# Development Methodology
+## Development Methodology
 
 This project follows the **AEF Swarm Development Process**.
 
-Development is frozen stage by stage.
+Development is frozen stage by stage:
 
 ```
-Requirements
-        ↓
-Architecture
-        ↓
-System Design
-        ↓
-Modules
-        ↓
-Tasks
-        ↓
-Implementation
+Requirements → Architecture → System Design → Modules → Tasks → Implementation
 ```
 
 No implementation begins until the previous stage is frozen.
 
 ---
 
-# Swarm Architecture
+## Communication Rules
 
-This repository is developed using multiple OpenHands sessions.
+### Core Principle
+AI employees NEVER communicate directly.
 
-## Rule
+### Communication Channel
+The repository is the communication channel.
 
-One AI Employee = One Task
+### Documents
+Every OpenHands employee begins by reading:
+- `README.md` (this file)
+- `docs/architecture/ARCHITECTURE.md`
+- `docs/modules/MODULES.md`
+- `docs/interfaces/INTERFACES.md`
+- `docs/decisions/DECISIONS.md`
+- `docs/status/STATUS.md`
+- Own employee file in `docs/employees/`
 
-NOT
-
-One AI Employee = One Module
-
-Each employee receives exactly one task.
-
----
-
-# Communication Model
-
-AI employees DO NOT communicate directly.
-
-Instead they communicate through this repository.
-
-The Chief Architect updates
-
-- README.md
-- TASKS.md
-- MODULES.md
-- DECISIONS.md
-
-Every OpenHands session begins by reading these files.
+### Updates
+The Chief Architect communicates ONLY by updating repository documents.
 
 ---
 
-# Chief Architect Responsibilities
+## Repository Structure
 
-The Chief Architect never builds features.
-
-Responsibilities
-
-- Freeze architecture
-- Assign tasks
-- Detect architecture drift
-- Review completed work
-- Update task board
-- Maintain project documentation
-- Ensure module boundaries are respected
-
----
-
-# Project Modules
-
-## M01 Pixel Canvas
-
-Purpose
-
-Render everything shown on the screen.
-
-Tasks
-
-- Canvas initialization
-- Pixel buffer
-- Rendering loop
-- Resize engine
-- Performance optimization
-- Unit testing
-
-Status
-
-🔴 Not Started
+```
+PEAAI/
+├── README.md                          # Project overview (this file)
+├── TASKS.md                           # Task registry
+├── docs/
+│   ├── architecture/
+│   │   └── ARCHITECTURE.md            # Frozen architecture
+│   ├── modules/
+│   │   └── MODULES.md                 # Module definitions
+│   ├── interfaces/
+│   │   └── INTERFACES.md              # Interface contracts
+│   ├── decisions/
+│   │   └── DECISIONS.md               # Architecture decisions
+│   ├── status/
+│   │   └── STATUS.md                  # Project status
+│   └── employees/
+│       ├── CA.md                      # Chief Architect
+│       ├── EMP-001.md                 # Employee #1
+│       ├── EMP-002.md                 # Employee #2
+│       └── ...                        # Up to EMP-100.md
+└── src/                              # Source code (future)
+```
 
 ---
 
-## M02 Companion Face Engine
+## Swarm Architecture Rules
 
-Purpose
+### One Employee = One Task
+NOT: One Employee = One Module
 
-Generate the AI face.
+Each employee receives exactly ONE task.
 
-Tasks
-
-- Face geometry
-- Eye renderer
-- Mouth renderer
-- Blink animation
-- Idle behaviour
-- Emotion integration
-- Testing
-
-Status
-
-🔴 Not Started
+### Review Process
+When an employee finishes:
+1. Read the code
+2. Compare against architecture
+3. Check folder boundaries
+4. Verify interface contracts
+5. Review coding standards
+6. Approve or reject
 
 ---
 
-## M03 Expression Engine
+## Current Development Stage
 
-Purpose
-
-Control facial expressions.
-
-Tasks
-
-- State machine
-- Expression transitions
-- Animation timing
-- Expression API
-- Testing
-
-Status
-
-🔴 Not Started
+| Stage | Status |
+|-------|--------|
+| Requirements | ✅ Frozen |
+| Architecture | ✅ Frozen |
+| System Design | ✅ Frozen |
+| Modules | ✅ Frozen |
+| Tasks | ✅ Frozen |
+| Implementation | 🔴 Not Started |
 
 ---
 
-## M04 Story Engine
+## Current Sprint
 
-Purpose
+**Sprint 1: Pixel Canvas Foundation**
 
-Generate scene-by-scene storytelling.
+Objective: Build the complete Pixel Canvas infrastructure
 
-Tasks
-
-- Story planner
-- Story streaming
-- Scene splitter
-- Scene queue
-- Story controller
-- Testing
-
-Status
-
-🔴 Not Started
+Priority: M01 → M02 → M03
 
 ---
 
-## M05 Story Renderer
+## Getting Started
 
-Purpose
-
-Render cinematic pixel scenes.
-
-Tasks
-
-- Background renderer
-- Character renderer
-- Weather effects
-- Camera movement
-- Scene animation
-- Performance optimization
-
-Status
-
-🔴 Not Started
+1. Read all documentation in this repository
+2. Check your employee file in `docs/employees/`
+3. Claim your assigned task from `TASKS.md`
+4. Implement only your assigned task
+5. Never modify another module
+6. Never change architecture
+7. Report completion in STATUS.md
 
 ---
 
-## M06 Transition Engine
-
-Purpose
-
-Transition between Companion Mode and Story Mode.
-
-Tasks
-
-- Face → Story
-- Story → Face
-- Pixel dissolve
-- Particle system
-- Animation timing
-
-Status
-
-🔴 Not Started
-
----
-
-## M07 Chat System
-
-Purpose
-
-User interaction.
-
-Tasks
-
-- Chat UI
-- Streaming messages
-- Typing animation
-- Notifications
-- Markdown support
-
-Status
-
-🔴 Not Started
-
----
-
-## M08 AI Orchestrator
-
-Purpose
-
-Coordinate every AI subsystem.
-
-Tasks
-
-- LLM integration
-- Story routing
-- Expression routing
-- Memory routing
-- Event bus
-
-Status
-
-🔴 Not Started
-
----
-
-## M09 Memory Engine
-
-Purpose
-
-Long-term memory.
-
-Tasks
-
-- Conversation storage
-- User profile
-- Semantic search
-- Story memory
-- Memory API
-
-Status
-
-🔴 Not Started
-
----
-
-## M10 Backend
-
-Purpose
-
-Server infrastructure.
-
-Tasks
-
-- Authentication
-- REST API
-- WebSocket
-- Database
-- Deployment
-
-Status
-
-🔴 Not Started
-
----
-
-# Current Sprint
-
-Sprint 1
-
-Objective
-
-Build the complete Pixel Canvas infrastructure.
-
-Priority
-
-M01 → M02 → M03
-
----
-
-# Development Rules
-
-Every OpenHands employee must
-
-- Read README.md before coding.
-- Work only on the assigned task.
-- Never modify another module.
-- Never change architecture.
-- Never rename interfaces without approval.
-- Submit only the assigned work.
-- Report completion back by updating the task status.
-
----
-
-# Current Status
-
-Requirements
-
-✅ Frozen
-
-Architecture
-
-✅ Frozen
-
-System Design
-
-✅ Frozen
-
-Modules
-
-✅ Frozen
-
-Tasks
-
-✅ Frozen
-
-Implementation
-
-🔴 Not Started
-
----
-
-# Documentation
+## Documentation Index
 
 | Document | Purpose |
 |----------|---------|
-| README.md | Project overview and current status |
-| MODULES.md | Module definitions and boundaries |
-| TASKS.md | Task registry and assignments |
-| INTERFACES.md | Public API definitions |
-| DECISIONS.md | Architecture decision log |
-| STATUS.md | Real-time project status tracking |
+| docs/architecture/ARCHITECTURE.md | Frozen architecture |
+| docs/modules/MODULES.md | Module definitions |
+| docs/interfaces/INTERFACES.md | Interface contracts |
+| docs/decisions/DECISIONS.md | Architecture decisions |
+| docs/status/STATUS.md | Project status |
+| docs/employees/CA.md | Chief Architect |
+| TASKS.md | Task registry |
 
 ---
 
-# Next Steps
+## Last Updated
 
-**Sprint 1 is ready to begin.**
-
-First task to assign: **T-001: Canvas Initialization**
-
-See TASKS.md for full task registry.
+2024-01-01 - Workspace initialized
