@@ -70,41 +70,41 @@
 
 ### UI/UX Engineering (9)
 
-| ID | Role | Module | Status |
-|----|------|--------|--------|
-| UI-001 | Design System | M01 | 🔴 Not Started |
-| UI-002 | Landing Page | M01 | 🔴 Not Started |
-| UI-003 | Auth UI | M01 | 🔴 Not Started |
-| UI-004 | Home Layout | M01/M07 | 🔴 Not Started |
-| UI-005 | Chat UI | M07 | 🔴 Not Started |
-| UI-006 | Settings | M07 | 🔴 Not Started |
-| UI-007 | Responsive | M01 | 🔴 Not Started |
-| UI-008 | Accessibility | M01 | 🔴 Not Started |
-| UI-009 | Integration | M01/M07 | 🔴 Not Started |
+| ID | Role | Module | Status | Assigned Tasks |
+|----|------|--------|--------|----------------|
+| UI-001 | Design System | M01 | 🟡 Assigned | T-001, T-002, T-003 |
+| UI-002 | Landing Page | M01 | 🔴 Not Started | - |
+| UI-003 | Auth UI | M01 | 🔴 Not Started | - |
+| UI-004 | Home Layout | M01/M07 | 🔴 Not Started | - |
+| UI-005 | Chat UI | M07 | 🔴 Not Started | - |
+| UI-006 | Settings | M07 | 🔴 Not Started | - |
+| UI-007 | Responsive | M01 | 🔴 Not Started | - |
+| UI-008 | Accessibility | M01 | 🔴 Not Started | - |
+| UI-009 | Integration | M01/M07 | 🔴 Not Started | - |
 
 ### Graphics Engine (7)
 
-| ID | Role | Module | Status |
-|----|------|--------|--------|
-| GE-001 | Canvas Engine | M03 | 🔴 Not Started |
-| GE-002 | Pixel Assignment | M03 | 🔴 Not Started |
-| GE-003 | Rendering | M03 | 🔴 Not Started |
-| GE-004 | Animation Generator | M04 | 🔴 Not Started |
-| GE-005 | Expression Engine | M02 | 🔴 Not Started |
-| GE-006 | Transition | M06 | 🔴 Not Started |
-| GE-007 | Story Renderer | M05 | 🔴 Not Started |
+| ID | Role | Module | Status | Assigned Tasks |
+|----|------|--------|--------|----------------|
+| GE-001 | Canvas Engine | M03 | 🔴 Not Started | - |
+| GE-002 | Pixel Assignment | M03 | 🔴 Not Started | - |
+| GE-003 | Rendering | M03 | 🔴 Not Started | - |
+| GE-004 | Animation Generator | M04 | 🔴 Not Started | - |
+| GE-005 | Expression Engine | M02 | 🔴 Not Started | - |
+| GE-006 | Transition | M06 | 🔴 Not Started | - |
+| GE-007 | Story Renderer | M05 | 🔴 Not Started | - |
 
 ### Backend & AI (7)
 
-| ID | Role | Module | Status |
-|----|------|--------|--------|
-| BA-001 | AI Orchestrator | M08 | 🔴 Not Started |
-| BA-002 | Memory Engine | M10 | 🔴 Not Started |
-| BA-003 | Backend API | M09 | 🔴 Not Started |
-| BA-004 | Database | M09 | 🔴 Not Started |
-| BA-005 | Realtime | M09 | 🔴 Not Started |
-| BA-006 | Story Pipeline | M08 | 🔴 Not Started |
-| BA-007 | Performance | M11 | 🔴 Not Started |
+| ID | Role | Module | Status | Assigned Tasks |
+|----|------|--------|--------|----------------|
+| BA-001 | AI Orchestrator | M08 | 🔴 Not Started | - |
+| BA-002 | Memory Engine | M10 | 🔴 Not Started | - |
+| BA-003 | Backend API | M09 | 🔴 Not Started | - |
+| BA-004 | Database | M09 | 🔴 Not Started | - |
+| BA-005 | Realtime | M09 | 🔴 Not Started | - |
+| BA-006 | Story Pipeline | M08 | 🔴 Not Started | - |
+| BA-007 | Performance | M11 | 🟡 Assigned | T-060, T-058, T-059, T-061, T-062 |
 
 ---
 
