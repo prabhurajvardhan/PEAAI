@@ -13,152 +13,46 @@
 
 ---
 
-## ICanvas Interface
+## Core Interfaces
 
-| Property | Value |
-|----------|-------|
-| Name | ICanvas |
-| Purpose | Core canvas rendering interface |
-| Owner Module | M01 (Pixel Canvas) |
-| Status | 🟡 Frozen (Draft) |
-
-### Interface Definition
+### ICanvas
 
 ```typescript
 interface ICanvas {
-  // Initialization
   initialize(container: HTMLElement): void;
   destroy(): void;
-  
-  // Rendering
   render(): void;
   clear(): void;
-  
-  // Pixel Buffer Access
   getPixelBuffer(): IPixelBuffer;
-  
-  // Configuration
   setSize(width: number, height: number): void;
   getSize(): { width: number; height: number };
   setPixelScale(scale: number): void;
-  
-  // State
   isInitialized(): boolean;
   pause(): void;
   resume(): void;
 }
 ```
 
-### Inputs
-- `container: HTMLElement` - DOM container for canvas
-- `width: number` - Canvas width in pixels
-- `height: number` - Canvas height in pixels
-- `scale: number` - Pixel scale multiplier
-
-### Outputs
-- Canvas element with rendering context
-- Pixel buffer access
-- Render state management
-
----
-
-## IPixelBuffer Interface
-
-| Property | Value |
-|----------|-------|
-| Name | IPixelBuffer |
-| Purpose | Direct pixel manipulation |
-| Owner Module | M01 (Pixel Canvas) |
-| Status | 🟡 Frozen (Draft) |
-
-### Interface Definition
+### IPixelBuffer
 
 ```typescript
 interface IPixelBuffer {
-  // Pixel Access
   setPixel(x: number, y: number, color: IColor): void;
   getPixel(x: number, y: number): IColor;
   setPixelBatch(pixels: IPixelBatch): void;
-  
-  // Operations
   fill(color: IColor): void;
   copy(): IPixelBuffer;
-  
-  // Blending
   blend(other: IPixelBuffer, x: number, y: number, mode: BlendMode): void;
 }
 
 interface IColor {
-  r: number; // 0-255
-  g: number; // 0-255
-  b: number; // 0-255
-  a: number; // 0-255
-}
-
-interface IPixelBatch {
-  pixels: Array<{ x: number; y: number; color: IColor }>;
+  r: number; g: number; b: number; a: number;
 }
 
 type BlendMode = 'replace' | 'alpha' | 'add' | 'multiply';
 ```
 
-### Inputs
-- `x: number`, `y: number` - Pixel coordinates
-- `color: IColor` - RGBA color values
-- `pixels: IPixelBatch` - Batch of pixel operations
-
-### Outputs
-- Pixel data read/write
-- Buffer operations
-- Blended pixel data
-
----
-
-## IRenderLoop Interface
-
-| Property | Value |
-|----------|-------|
-| Name | IRenderLoop |
-| Purpose | Frame timing and loop control |
-| Owner Module | M01 (Pixel Canvas) |
-| Status | 🟡 Frozen (Draft) |
-
-### Interface Definition
-
-```typescript
-interface IRenderLoop {
-  start(): void;
-  stop(): void;
-  pause(): void;
-  resume(): void;
-  
-  onFrame(callback: (deltaTime: number) => void): () => void;
-  
-  getFPS(): number;
-  isRunning(): boolean;
-}
-```
-
-### Inputs
-- `callback: (deltaTime: number) => void` - Frame callback function
-
-### Outputs
-- Frame timing data
-- Loop state
-- FPS information
-
----
-
-## IFaceGeometry Interface
-
-| Property | Value |
-|----------|-------|
-| Name | IFaceGeometry |
-| Purpose | Face structure definitions |
-| Owner Module | M02 (Companion Face Engine) |
-| Status | 🟡 Frozen (Draft) |
-
-### Interface Definition
+### IFaceGeometry
 
 ```typescript
 interface IFaceGeometry {
@@ -166,134 +60,49 @@ interface IFaceGeometry {
   readonly EYE_LEFT: IPosition;
   readonly EYE_RIGHT: IPosition;
   readonly MOUTH: IPosition;
-  readonly PUPIL_SIZE: number;
-}
-
-interface IPosition {
-  x: number;
-  y: number;
 }
 
 interface IFaceState {
-  eyeOpenness: number; // 0-1
+  eyeOpenness: number;      // 0-1
   pupilDirection: IPosition; // -1 to 1 normalized
-  mouthOpenness: number; // 0-1
-  mouthCurve: number; // -1 to 1 (frown to smile)
-}
-```
-
-### Inputs
-- None (constants)
-
-### Outputs
-- Face geometry constants
-- Face state data
-
----
-
-## IFaceRenderer Interface
-
-| Property | Value |
-|----------|-------|
-| Name | IFaceRenderer |
-| Purpose | Face rendering to pixel buffer |
-| Owner Module | M02 (Companion Face Engine) |
-| Status | 🟡 Frozen (Draft) |
-
-### Interface Definition
-
-```typescript
-interface IFaceRenderer {
-  render(state: IFaceState, buffer: IPixelBuffer): void;
-  
-  renderEyes(state: IFaceState, buffer: IPixelBuffer): void;
-  renderMouth(state: IFaceState, buffer: IPixelBuffer): void;
-  
-  setEmotionColor(emotion: EmotionType): void;
+  mouthOpenness: number;    // 0-1
+  mouthCurve: number;       // -1 to 1 (frown to smile)
 }
 
-type EmotionType = 
-  | 'neutral' 
-  | 'happy' 
-  | 'sad' 
-  | 'angry' 
-  | 'surprised' 
-  | 'thinking'
-  | 'excited'
-  | 'sleepy';
+type EmotionType = 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised' | 'thinking' | 'excited' | 'sleepy';
 ```
 
-### Inputs
-- `state: IFaceState` - Current face state
-- `buffer: IPixelBuffer` - Target pixel buffer
-- `emotion: EmotionType` - Emotion color mapping
-
-### Outputs
-- Rendered face to pixel buffer
-
----
-
-## IExpressionEngine Interface
-
-| Property | Value |
-|----------|-------|
-| Name | IExpressionEngine |
-| Purpose | Expression state management |
-| Owner Module | M03 (Expression Engine) |
-| Status | 🟡 Frozen (Draft) |
-
-### Interface Definition
+### IExpressionEngine
 
 ```typescript
 interface IExpressionEngine {
-  // State Management
   setExpression(expression: ExpressionType): Promise<void>;
   getCurrentExpression(): ExpressionType;
   queueExpression(expression: ExpressionType, duration?: number): void;
   clearQueue(): void;
-  
-  // Listening
   onExpressionChange(callback: (expr: ExpressionType) => void): () => void;
   onTransitionComplete(callback: () => void): () => void;
-  
-  // Face Integration
   connectFace(renderer: IFaceRenderer): void;
 }
 
-type ExpressionType = 
-  | 'neutral'
-  | 'happy'
-  | 'sad'
-  | 'angry'
-  | 'surprised'
-  | 'thinking'
-  | 'curious'
-  | 'sleepy'
-  | 'excited';
+type ExpressionType = 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised' | 'thinking' | 'curious' | 'sleepy' | 'excited';
 ```
 
-### Inputs
-- `expression: ExpressionType` - Target expression
-- `callback: Function` - Event handlers
-- `renderer: IFaceRenderer` - Face renderer connection
+### IAnimationTimeline
 
-### Outputs
-- Expression state changes
-- Transition events
-- Face state commands
+```typescript
+interface IAnimationTimeline {
+  play(): void;
+  pause(): void;
+  stop(): void;
+  seek(time: number): void;
+  getDuration(): number;
+  getCurrentTime(): number;
+  onFrame(callback: (progress: number) => void): () => void;
+}
+```
 
----
-
-## IEventBus Interface
-
-| Property | Value |
-|----------|-------|
-| Name | IEventBus |
-| Purpose | Event-driven module communication |
-| Owner Module | M08 (AI Orchestrator) |
-| Status | 🟡 Frozen (Draft) |
-
-### Interface Definition
+### IEventBus
 
 ```typescript
 interface IEventBus {
@@ -305,27 +114,7 @@ interface IEventBus {
 }
 ```
 
-### Inputs
-- `event: string` - Event name
-- `data: T` - Event payload
-- `handler: Function` - Event handler
-
-### Outputs
-- Event dispatch
-- Handler subscription
-
----
-
-## IStorage Interface
-
-| Property | Value |
-|----------|-------|
-| Name | IStorage |
-| Purpose | Persistent data storage |
-| Owner Module | M09 (Memory Engine) |
-| Status | 🟡 Frozen (Draft) |
-
-### Interface Definition
+### IStorage
 
 ```typescript
 interface IStorage {
@@ -337,13 +126,34 @@ interface IStorage {
 }
 ```
 
-### Inputs
-- `key: string` - Storage key
-- `value: T` - Data to store
+### ISceneRenderer
 
-### Outputs
-- Retrieved data
-- Operation status
+```typescript
+interface ISceneRenderer {
+  renderScene(scene: ISceneData): void;
+  clearScene(): void;
+  setCamera(camera: ICamera): void;
+}
+
+interface ISceneData {
+  background: string;
+  characters: ICharacter[];
+  environment: IEnvironment;
+  actions: ISceneAction[];
+}
+```
+
+### ITransition
+
+```typescript
+interface ITransition {
+  fromFace(state: IFaceState): Promise<void>;
+  toFace(state: IFaceState): Promise<void>;
+  fromScene(scene: ISceneData): Promise<void>;
+  toScene(scene: ISceneData): Promise<void>;
+  cancel(): void;
+}
+```
 
 ---
 
@@ -351,14 +161,15 @@ interface IStorage {
 
 | Interface | Module | Status | Version |
 |-----------|--------|--------|---------|
-| ICanvas | M01 | 🟡 Draft | 1.0 |
-| IPixelBuffer | M01 | 🟡 Draft | 1.0 |
-| IRenderLoop | M01 | 🟡 Draft | 1.0 |
+| ICanvas | M03 | 🟡 Draft | 1.0 |
+| IPixelBuffer | M03 | 🟡 Draft | 1.0 |
 | IFaceGeometry | M02 | 🟡 Draft | 1.0 |
-| IFaceRenderer | M02 | 🟡 Draft | 1.0 |
-| IExpressionEngine | M03 | 🟡 Draft | 1.0 |
+| IExpressionEngine | M02 | 🟡 Draft | 1.0 |
+| IAnimationTimeline | M04 | 🟡 Draft | 1.0 |
 | IEventBus | M08 | 🟡 Draft | 1.0 |
-| IStorage | M09 | 🟡 Draft | 1.0 |
+| IStorage | M10 | 🟡 Draft | 1.0 |
+| ISceneRenderer | M05 | 🟡 Draft | 1.0 |
+| ITransition | M06 | 🟡 Draft | 1.0 |
 
 ---
 
@@ -374,4 +185,4 @@ A breaking change requires:
 
 ## Last Updated
 
-2024-01-01 - Interfaces defined
+2024-01-01 - V2 Interfaces defined

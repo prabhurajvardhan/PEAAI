@@ -82,6 +82,19 @@ No implementation begins until the previous stage is frozen.
 
 ---
 
+## Project Organization
+
+### Engineering Teams (25 Employees)
+
+| Team | Employees | Count |
+|------|-----------|-------|
+| Management | Chief Architect, Documentation Engineer | 2 |
+| UI/UX Engineering | Design System, Landing Page, Auth UI, Home Layout, Chat UI, Settings, Responsive, Accessibility, Integration | 9 |
+| Graphics Engine | Canvas, Pixel Assignment, Pixel Rendering, Animation Generator, Expression, Transition, Story Scene Renderer | 7 |
+| Backend & AI | AI Orchestrator, Memory, Backend API, Database, Realtime, Story Pipeline, Performance | 7 |
+
+---
+
 ## Communication Rules
 
 ### Core Principle
@@ -95,6 +108,7 @@ Every OpenHands employee begins by reading:
 - `README.md` (this file)
 - `docs/architecture/ARCHITECTURE.md`
 - `docs/modules/MODULES.md`
+- `docs/tasks/TASKS.md`
 - `docs/interfaces/INTERFACES.md`
 - `docs/decisions/DECISIONS.md`
 - `docs/status/STATUS.md`
@@ -110,12 +124,15 @@ The Chief Architect communicates ONLY by updating repository documents.
 ```
 PEAAI/
 ├── README.md                          # Project overview (this file)
-├── TASKS.md                           # Task registry
+├── TASKS.md                           # Task registry summary
 ├── docs/
 │   ├── architecture/
-│   │   └── ARCHITECTURE.md            # Frozen architecture
+│   │   ├── ARCHITECTURE.md            # System architecture
+│   │   └── DEPENDENCIES.md            # Module dependency graph
 │   ├── modules/
-│   │   └── MODULES.md                 # Module definitions
+│   │   └── MODULES.md                 # Module definitions (M01-M11)
+│   ├── tasks/
+│   │   └── TASKS.md                   # Task registry
 │   ├── interfaces/
 │   │   └── INTERFACES.md              # Interface contracts
 │   ├── decisions/
@@ -124,9 +141,10 @@ PEAAI/
 │   │   └── STATUS.md                  # Project status
 │   └── employees/
 │       ├── CA.md                      # Chief Architect
-│       ├── EMP-001.md                 # Employee #1
-│       ├── EMP-002.md                 # Employee #2
-│       └── ...                        # Up to EMP-100.md
+│       ├── DOC-001.md                # Documentation Engineer
+│       ├── UI-001.md to UI-009.md    # UI/UX Team
+│       ├── GE-001.md to GE-007.md    # Graphics Engine Team
+│       └── BA-001.md to BA-007.md    # Backend & AI Team
 └── src/                              # Source code (future)
 ```
 
@@ -163,13 +181,21 @@ When an employee finishes:
 
 ---
 
-## Current Sprint
+## Module Overview
 
-**Sprint 1: Pixel Canvas Foundation**
-
-Objective: Build the complete Pixel Canvas infrastructure
-
-Priority: M01 → M02 → M03
+| ID | Module | Team | Status |
+|----|--------|------|--------|
+| M01 | Product Foundation | UI/UX | 🔴 Not Started |
+| M02 | Companion Engine | Graphics | 🔴 Not Started |
+| M03 | Pixel Graphics Engine | Graphics | 🔴 Not Started |
+| M04 | Animation Engine | Graphics | 🔴 Not Started |
+| M05 | Story Visualization Engine | Graphics | 🔴 Not Started |
+| M06 | Transition Engine | Graphics | 🔴 Not Started |
+| M07 | Conversation Engine | UI/UX | 🔴 Not Started |
+| M08 | AI Engine | Backend | 🔴 Not Started |
+| M09 | Backend Infrastructure | Backend | 🔴 Not Started |
+| M10 | Memory Engine | Backend | 🔴 Not Started |
+| M11 | Performance Engine | Backend | 🔴 Not Started |
 
 ---
 
@@ -177,7 +203,7 @@ Priority: M01 → M02 → M03
 
 1. Read all documentation in this repository
 2. Check your employee file in `docs/employees/`
-3. Claim your assigned task from `TASKS.md`
+3. Read your assigned task from `docs/tasks/TASKS.md`
 4. Implement only your assigned task
 5. Never modify another module
 6. Never change architecture
@@ -189,16 +215,17 @@ Priority: M01 → M02 → M03
 
 | Document | Purpose |
 |----------|---------|
-| docs/architecture/ARCHITECTURE.md | Frozen architecture |
+| docs/architecture/ARCHITECTURE.md | System architecture |
+| docs/architecture/DEPENDENCIES.md | Module dependency graph |
 | docs/modules/MODULES.md | Module definitions |
+| docs/tasks/TASKS.md | Task registry |
 | docs/interfaces/INTERFACES.md | Interface contracts |
 | docs/decisions/DECISIONS.md | Architecture decisions |
 | docs/status/STATUS.md | Project status |
-| docs/employees/CA.md | Chief Architect |
-| TASKS.md | Task registry |
+| docs/employees/* | Employee assignments |
 
 ---
 
 ## Last Updated
 
-2024-01-01 - Workspace initialized
+2024-01-01 - V2 Architecture initialized
