@@ -80,7 +80,7 @@
 
 | ID | Module | Description | Status | Assignee |
 |----|--------|-------------|--------|----------|
-| T-001 | M01 | Canvas Initialization | 🔴 Not Started | Unassigned |
+| T-001 | M01 | Canvas Initialization | 🟡 Assigned | OpenHands Employee #1 |
 | T-002 | M01 | Pixel Buffer | 🔴 Not Started | Unassigned |
 | T-003 | M01 | Rendering Loop | 🔴 Not Started | Unassigned |
 | T-004 | M01 | Resize Engine | 🔴 Not Started | Unassigned |

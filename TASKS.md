@@ -24,8 +24,8 @@ Priority: M01 → M02 → M03
 | Acceptance Criteria | - Canvas element created with correct dimensions<br>- 2D rendering context obtained<br>- Canvas sized to container element<br>- DPR (device pixel ratio) handling for crisp pixels |
 | Dependencies | None |
 | Priority | Critical |
-| Assigned To | Unassigned |
-| Status | 🔴 Not Started |
+| Assigned To | OpenHands Employee #1 |
+| Status | 🟡 Assigned |
 | Estimated Files | `src/renderer/canvas.ts` |
 | Expected Output | Functional canvas element ready for pixel rendering |
 
