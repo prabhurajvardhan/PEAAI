@@ -9,6 +9,16 @@
 export { CanvasEngine, ICanvas } from './canvas';
 export { PixelGridManager, IGridManager } from './grid';
 export { PixelBuffer, IPixelBuffer } from './buffer';
+export { PixelRenderer } from './rendering';
+export { PixelColorEngine, PALETTES } from './color';
+export {
+  PixelOptimizer,
+  MemoryPool,
+  LRUCache,
+  OperationBatcher,
+  FPSCounter,
+  Benchmark,
+} from './optimizer';
 export type {
   IColor,
   IPixelBatch,
@@ -18,3 +28,26 @@ export type {
   IPosition,
   ISize,
 } from './types';
+export type {
+  DirtyRect,
+  BatchOperation,
+  RenderStats,
+  RendererConfig,
+} from './rendering';
+export type {
+  PaletteEntry,
+  ColorPalette,
+  InterpolationMode,
+  ExtendedBlendMode,
+  PorterDuffOperator,
+  GradientStop,
+  ColorConfig,
+} from './color';
+export type {
+  PoolConfig,
+  BenchmarkResult,
+  PerformanceMetrics,
+  OperationType,
+  BatchedOperation,
+  OptimizerConfig,
+} from './optimizer';
