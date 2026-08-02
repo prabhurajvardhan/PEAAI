@@ -835,10 +835,10 @@
 | Sub-component | API |
 | Description | Build REST API endpoints |
 | Acceptance Criteria | - User endpoints<br>- Conversation endpoints<br>- Memory endpoints<br>- Pagination<br>- Rate limiting |
-| Dependencies | T-053 (Database) |
+| Dependencies | T-049 (Database) |
 | Priority | P4 |
 | Assigned To | BA-003 |
-| Status | 🔴 Not Started |
+| Status | ✅ Completed |
 | Estimated Files | `backend/api/` |
 
 ---
@@ -855,7 +855,7 @@
 | Dependencies | T-047 |
 | Priority | P4 |
 | Assigned To | BA-003 |
-| Status | 🔴 Not Started |
+| Status | ✅ Completed |
 | Estimated Files | `backend/auth/` |
 
 ---

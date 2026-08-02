@@ -1,7 +1,7 @@
 """Memory model for AI memory and context storage."""
 from datetime import datetime
 from sqlalchemy import (
-    Column, String, DateTime, Boolean, Text, ForeignKey, Float,
+    Column, String, DateTime, Boolean, Text, ForeignKey, Float, Integer,
     Index, CheckConstraint, Enum as SQLEnum
 )
 from sqlalchemy.orm import relationship
@@ -58,7 +58,7 @@ class Memory(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime, nullable=True)
     
-    metadata = Column(JSONB, nullable=True)
+    meta = Column(JSONB, nullable=True)
     tags = Column(JSONB, nullable=True)  # Array of tags for categorization
 
     # Relationships
