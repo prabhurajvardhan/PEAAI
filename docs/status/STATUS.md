@@ -100,9 +100,9 @@
 |----|------|--------|--------|----------------|
 | BA-001 | AI Orchestrator | M08 | 🔴 Not Started | T-042, T-043, T-044, T-045, T-046 |
 | BA-002 | Memory Engine | M10 | 🔴 Ready to Start | T-053, T-054, T-055, T-056, T-057 |
-| BA-003 | Backend API | M09 | 🔴 Ready to Start | T-047, T-048 |
+| BA-003 | Backend API | M09 | ✅ Complete | T-047, T-048 |
 | BA-004 | Database | M09 | ✅ Complete | T-049 |
-| BA-005 | Realtime | M09 | 🔴 Blocked | T-050, T-051, T-052 (needs T-048) |
+| BA-005 | Realtime | M09 | 🔴 Ready to Start | T-050, T-051, T-052 (needs T-048) |
 | BA-006 | Story Pipeline | M08 | 🔴 Not Started | Story Pipeline (after BA-001) |
 | BA-007 | Performance | M11 | ✅ Complete | T-060, T-058, T-059, T-061, T-062 |
 

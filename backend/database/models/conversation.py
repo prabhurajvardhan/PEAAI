@@ -39,7 +39,7 @@ class Conversation(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     ended_at = Column(DateTime, nullable=True)
     message_count = Column(Integer, default=0, nullable=False)
-    metadata = Column(JSONB, nullable=True)
+    meta = Column(JSONB, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="conversations")
@@ -71,7 +71,7 @@ class Message(Base):
     content = Column(Text, nullable=False)
     sequence_number = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    metadata = Column(JSONB, nullable=True)
+    meta = Column(JSONB, nullable=True)
     embedding = Column(Text, nullable=True)  # Stored as text for vector embeddings
 
     # Relationships
