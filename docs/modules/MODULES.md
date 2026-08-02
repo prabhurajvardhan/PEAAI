@@ -229,7 +229,7 @@
 - `src/ai/routing/memory/`
 - `src/ai/routing/story/`
 - `src/ai/routing/expression/`
-- `src/ai/event-dispatcher/`
+- `src/ai/event_dispatcher/`
 
 ---
 
