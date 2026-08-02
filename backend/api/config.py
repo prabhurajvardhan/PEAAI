@@ -28,6 +28,26 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: list[str] = ["*"]
 
+    # WebSocket
+    WEBSOCKET_HEARTBEAT_INTERVAL: int = 30
+    WEBSOCKET_HEARTBEAT_TIMEOUT: int = 60
+    WEBSOCKET_MAX_MISSED_HEARTBEATS: int = 3
+
+    # Session Management
+    SESSION_MAX_CONCURRENT: int = 5
+    SESSION_TTL_HOURS: int = 24
+
+    # Storage
+    CDN_BASE_URL: str = ""
+    STORAGE_PATH: str = "./storage"
+    STORAGE_MAX_IMAGE_SIZE: int = 10 * 1024 * 1024  # 10 MB
+    STORAGE_MAX_VIDEO_SIZE: int = 100 * 1024 * 1024  # 100 MB
+    STORAGE_MAX_AUDIO_SIZE: int = 50 * 1024 * 1024  # 50 MB
+    STORAGE_MAX_DOCUMENT_SIZE: int = 5 * 1024 * 1024  # 5 MB
+
+    # Redis (for session storage)
+    REDIS_URL: str = "redis://localhost:6379/0"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
