@@ -59,3 +59,11 @@ export interface ISize {
   width: number;
   height: number;
 }
+
+/**
+ * Extended pixel buffer interface with data access
+ */
+export interface IPixelBufferExtended extends Omit<IPixelBuffer, never> {
+  getData(): Uint8ClampedArray;
+  setData(data: Uint8ClampedArray): void;
+}

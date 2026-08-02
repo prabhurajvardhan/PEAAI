@@ -22,3 +22,26 @@ export type {
   IPosition,
   ISize,
 } from './types';
+export type {
+  DirtyRect,
+  BatchOperation,
+  RenderStats,
+  RendererConfig,
+} from './rendering';
+export type {
+  PaletteEntry,
+  ColorPalette,
+  InterpolationMode,
+  ExtendedBlendMode,
+  PorterDuffOperator,
+  GradientStop,
+  ColorConfig,
+} from './color';
+export type {
+  PoolConfig,
+  BenchmarkResult,
+  PerformanceMetrics,
+  OperationType,
+  BatchedOperation,
+  OptimizerConfig,
+} from './optimizer';
