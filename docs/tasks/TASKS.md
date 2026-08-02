@@ -820,7 +820,7 @@
 | Priority | P5 |
 | Assigned To | BA-001 |
 | Status | 🔴 Not Started |
-| Estimated Files | `src/ai/event-dispatcher/` |
+| Estimated Files | `src/ai/event_dispatcher/` |
 
 ---
 
