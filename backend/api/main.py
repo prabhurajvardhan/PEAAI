@@ -22,6 +22,9 @@ from backend.api.routers import (
     conversations_router,
     memories_router,
     auth_router,
+    websocket_router,
+    session_router,
+    storage_router,
 )
 from backend.api.middleware import limiter
 
@@ -51,6 +54,9 @@ app = FastAPI(
     * **Users** - User profile management
     * **Conversations** - Chat conversation and message management
     * **Memories** - AI memory storage and retrieval
+    * **Sessions** - Session management with concurrent session support
+    * **Storage** - File upload, download, and CDN integration
+    * **WebSocket** - Real-time communication
     
     ## Authentication
     
@@ -90,6 +96,9 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(conversations_router)
 app.include_router(memories_router)
+app.include_router(session_router)
+app.include_router(storage_router)
+app.include_router(websocket_router)
 
 
 @app.get("/", tags=["Health"])
@@ -121,5 +130,8 @@ async def api_info():
             "users": "/api/v1/users",
             "conversations": "/api/v1/conversations",
             "memories": "/api/v1/memories",
+            "sessions": "/api/v1/sessions",
+            "storage": "/api/v1/storage",
+            "websocket": "/ws",
         }
     }

@@ -20,3 +20,14 @@ slowapi>=0.1.9
 
 # Email (for password reset)
 email-validator>=2.1.0
+
+# WebSocket dependencies
+websockets>=12.0
+
+# Session management
+redis>=5.0.0
+
+# File storage
+aiofiles>=23.2.0
+python-multipart>=0.0.6
+magic>=0.4.27
