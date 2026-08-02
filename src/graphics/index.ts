@@ -9,6 +9,10 @@
 export { CanvasEngine, ICanvas } from './canvas';
 export { PixelGridManager, IGridManager } from './grid';
 export { PixelBuffer, IPixelBuffer } from './buffer';
+export {
+  PixelAssignmentEngine,
+  IPixelAssignmentEngine,
+} from './pixel-assignment';
 export type {
   IColor,
   IPixelBatch,
