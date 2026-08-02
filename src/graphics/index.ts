@@ -9,16 +9,10 @@
 export { CanvasEngine, ICanvas } from './canvas';
 export { PixelGridManager, IGridManager } from './grid';
 export { PixelBuffer, IPixelBuffer } from './buffer';
-export { PixelRenderer } from './rendering';
-export { PixelColorEngine, PALETTES } from './color';
 export {
-  PixelOptimizer,
-  MemoryPool,
-  LRUCache,
-  OperationBatcher,
-  FPSCounter,
-  Benchmark,
-} from './optimizer';
+  PixelAssignmentEngine,
+  IPixelAssignmentEngine,
+} from './pixel-assignment';
 export type {
   IColor,
   IPixelBatch,
