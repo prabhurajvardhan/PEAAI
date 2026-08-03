@@ -752,7 +752,7 @@
 | Priority | P5 |
 | Assigned To | BA-001 |
 | Status | 🔴 Not Started |
-| Estimated Files | `src/ai/llm/` |
+| Estimated Files | `backend/ai/llm/` |
 
 ---
 
@@ -769,7 +769,7 @@
 | Priority | P5 |
 | Assigned To | BA-001 |
 | Status | 🔴 Not Started |
-| Estimated Files | `src/ai/routing/memory/` |
+| Estimated Files | `backend/ai/routing/memory/` |
 
 ---
 
@@ -786,7 +786,7 @@
 | Priority | P5 |
 | Assigned To | BA-001 |
 | Status | 🔴 Not Started |
-| Estimated Files | `src/ai/routing/story/` |
+| Estimated Files | `backend/ai/routing/story/` |
 
 ---
 
@@ -803,7 +803,7 @@
 | Priority | P5 |
 | Assigned To | BA-001 |
 | Status | 🔴 Not Started |
-| Estimated Files | `src/ai/routing/expression/` |
+| Estimated Files | `backend/ai/routing/expression/` |
 
 ---
 
@@ -820,7 +820,7 @@
 | Priority | P5 |
 | Assigned To | BA-001 |
 | Status | 🔴 Not Started |
-| Estimated Files | `src/ai/event_dispatcher/` |
+| Estimated Files | `backend/ai/event_dispatcher/` |
 
 ---
 

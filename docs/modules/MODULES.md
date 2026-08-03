@@ -225,11 +225,11 @@
 - Event Dispatcher: Event bus management
 
 **Owned Files:**
-- `src/ai/llm/`
-- `src/ai/routing/memory/`
-- `src/ai/routing/story/`
-- `src/ai/routing/expression/`
-- `src/ai/event_dispatcher/`
+- `backend/ai/llm/`
+- `backend/ai/routing/memory/`
+- `backend/ai/routing/story/`
+- `backend/ai/routing/expression/`
+- `backend/ai/event_dispatcher/`
 
 ---
 

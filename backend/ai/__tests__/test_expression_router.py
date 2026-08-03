@@ -6,9 +6,9 @@ import asyncio
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.ai.routing.expression import (
+from backend.ai.routing.expression import (
     ExpressionRouter,
     ExpressionQuery,
     ExpressionResponse,
@@ -17,7 +17,7 @@ from src.ai.routing.expression import (
     EmotionDetectionResult,
     ExpressionCommand,
 )
-from src.ai.event_dispatcher import EventDispatcher
+from backend.ai.event_dispatcher import EventDispatcher
 
 
 class TestExpressionRouter:

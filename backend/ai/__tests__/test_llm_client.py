@@ -7,9 +7,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.ai.llm import (
+from backend.ai.llm import (
     Message,
     MessageRole,
     LLMClient,
@@ -87,7 +87,7 @@ class TestLLMClient:
 
     def test_format_request_openai(self, client):
         """Test OpenAI request formatting."""
-        from src.ai.llm import LLMRequest
+        from backend.ai.llm import LLMRequest
 
         request = LLMRequest(
             messages=[
@@ -106,7 +106,7 @@ class TestLLMClient:
 
     def test_format_request_anthropic(self, client):
         """Test Anthropic request formatting."""
-        from src.ai.llm import LLMRequest
+        from backend.ai.llm import LLMRequest
 
         request = LLMRequest(
             messages=[
