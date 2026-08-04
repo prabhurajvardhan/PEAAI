@@ -34,6 +34,9 @@ Thumbs.db
 # Test coverage
 coverage/
 
+# Package lock files (not needed for individual packages)
+**/package-lock.json
+
 # Temporary files
 *.tmp
 .cache/
