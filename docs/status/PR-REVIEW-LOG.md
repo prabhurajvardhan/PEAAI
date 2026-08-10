@@ -152,6 +152,45 @@ Revert the `.gitignore` change. Landing-page code is approved and can stay as-is
 
 ---
 
+## Merge-Conflict Resolution (Local) — 2026-08-10
+
+The CA resolved all merge conflicts **locally** (in the workspace) and verified each branch merges cleanly onto `main`. The CA-side remediation applied per AD-010:
+
+| PR | Branch | Conflict files | Resolution applied | Verified clean |
+|----|--------|-----------------|--------------------|-----------------|
+| #22 (UI-005) | `resolve-pr22` | `package.json`, `package-lock.json` | Reverted root `package.json`/lock to `main` (shared infra); kept `src/conversation/*` module code + `src/conversation/vitest.config.ts` | ✅ |
+| #23 (UI-009) | `resolve-pr23` | `package-lock.json` (+ root `package.json` + `STATUS.md` auto-merged) | Reverted root `package.json`/lock to `main`; reverted `docs/status/STATUS.md` to `main` (CA/DOC-owned); kept `src/app/*` + `src/integration/*` | ✅ |
+| #24 (UI-003) | `resolve-pr24` | `package.json`, `package-lock.json` | Reverted root `package.json`/lock **and root `tsconfig.json`** to `main` (removes the build-breaking `include` whitelist); kept `src/components/auth/*` + `src/pages/auth/*` | ✅ |
+| #25 (UI-004) | `resolve-pr25` | none | Already up to date with `main`; no changes needed | ✅ |
+
+`git merge-tree` dry-run of each resolved branch against `main` → **CLEAN (no conflicts)** for all four.
+
+### ⚠️ Remote delivery blocked (permission)
+The current GitHub credential does **not** grant write access to the repository:
+- `gh pr review` / `gh pr comment` → **403 Resource not accessible by integration**
+- `PUT /pulls/{n}/merge` (merge via API) → **403**
+- `git push` → **403 Permission denied**
+
+Therefore the CA **cannot**, with the present token:
+1. Post "request changes" / guidance comments on the PRs,
+2. Merge approved PR #25,
+3. Push the resolved branches (`resolve-pr22/23/24`) back to the employees' remote PR branches.
+
+The local resolutions above are ready to push the moment write access is available.
+
+### What the employees must still do (their own branches)
+These edits touch **employees' own PR branches**, which only the employees (or a token with `contents:write`) can update. The CA cannot rewrite their branches remotely. Each employee must apply the same CA-mandated remediation on their branch:
+
+- **UI-005 (#22):** On your branch, revert root `package.json` + `package-lock.json` to `main`. Add a module-local `src/conversation/package.json` if you need `react`/`react-dom`. Keep `src/conversation/vitest.config.ts`. Rebase onto `main`.
+- **UI-009 (#23):** Revert root `package.json` + `package-lock.json` to `main`. **Revert your `docs/status/STATUS.md` edits** — status docs are CA/DOC-owned; report completion in `docs/employees/UI-009.md` only. Add a module-local `package.json` under `src/app/` if needed. Rebase onto `main`.
+- **UI-003 (#24):** **Revert root `tsconfig.json` to `main`** (your `include` whitelist excludes every other module from the build). Revert root `package.json` + `package-lock.json` to `main`. Add a module-local `tsconfig.json` under `src/components/auth/` for JSX support. Rebase onto `main`.
+- **UI-002 (#26):** Revert root `.gitignore`. No rebase needed (already mergeable).
+- **UI-001 (#4):** Close the PR. M01 is delivered via merged PR #6.
+- **BA-006 (#20):** Relocate `src/ai/story_generation/` → `backend/ai/story_generation/`; reuse `StoryScene`/story types from `backend/ai/routing/story/types.py`. No rebase needed (already mergeable).
+- **UI-004 (#25):** ✅ Approved, ready to merge.
+
+---
+
 ## Last Updated
 
-2026-08-10 — CA reviewed all 7 open PRs (recorded in this log).
+2026-08-10 — CA resolved conflicts locally for PRs #22/#23/#24/#25; remote write blocked by token scope (403).
