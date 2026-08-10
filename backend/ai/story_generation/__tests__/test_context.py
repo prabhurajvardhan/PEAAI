@@ -1,12 +1,12 @@
 """Tests for context window management."""
 import pytest
-from src.ai.story_generation.context import (
+from backend.ai.story_generation.context import (
     ContextManager,
     ContextWindow,
     MemorySummary,
     get_context_manager,
 )
-from src.ai.story_generation.types import (
+from backend.ai.story_generation.types import (
     StoryPromptContext,
     StoryGenre,
     StoryGenerationConfig,

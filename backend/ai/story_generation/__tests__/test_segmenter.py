@@ -1,7 +1,7 @@
 """Tests for scene segmentation."""
 import pytest
-from src.ai.story_generation.segmenter import SceneSegmenter, get_segmenter
-from src.ai.story_generation.types import StoryGenre
+from backend.ai.story_generation.segmenter import SceneSegmenter, get_segmenter
+from backend.ai.story_generation.types import StoryGenre
 
 
 class TestSceneSegmenter:

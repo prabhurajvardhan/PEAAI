@@ -1,9 +1,23 @@
 """
 Type definitions for Story Generation Pipeline.
+
+Reuses types from backend.ai.routing.story for story/scene types.
 """
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+# Import existing M08 story types from BA-001's implementation
+from backend.ai.routing.story.types import (
+    StoryScene as BaseStoryScene,
+    Story as BaseStory,
+    StoryQuery as BaseStoryQuery,
+)
+
+# Re-export for convenience
+StoryScene = BaseStoryScene
+Story = BaseStory
+StoryQuery = BaseStoryQuery
 
 
 class StoryGenre(Enum):
@@ -47,20 +61,6 @@ class StoryGenerationConfig:
     include_action: bool = True
     enable_streaming: bool = True
     context_window_tokens: int = 8192
-
-
-@dataclass
-class StoryScene:
-    """A segmented scene from a story."""
-    scene_id: str
-    index: int
-    text: str
-    description: str
-    characters: List[str] = field(default_factory=list)
-    setting: str = ""
-    mood: str = ""
-    duration_estimate: float = 5.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

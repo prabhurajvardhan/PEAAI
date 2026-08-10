@@ -8,7 +8,7 @@ import uuid
 from typing import List, Optional, Callable
 from dataclasses import dataclass
 
-from .types import StoryScene, StoryGenre, SceneMarker
+from .types import StoryScene, StoryGenre, SceneMarker, StoryGenerationConfig
 
 
 @dataclass

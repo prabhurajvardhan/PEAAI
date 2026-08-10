@@ -1,6 +1,6 @@
 """Tests for story generation types."""
 import pytest
-from src.ai.story_generation.types import (
+from backend.ai.story_generation.types import (
     StoryGenre,
     StoryLength,
     StoryGenerationConfig,
@@ -98,17 +98,21 @@ class TestStoryScene:
         assert scene.setting == "Dark forest"
         assert scene.mood == "mysterious"
     
-    def test_scene_with_metadata(self):
-        """Test scene with metadata."""
+    def test_scene_with_characters(self):
+        """Test scene with characters."""
         scene = StoryScene(
-            scene_id="scene_with_meta",
+            scene_id="scene_with_chars",
             index=1,
             text="The hero ventured deeper...",
             description="Hero enters the cave",
-            metadata={"quest": "Find the treasure"},
+            characters=["Hero", "Guide"],
+            setting="Dark cave",
+            mood="tense",
         )
         
-        assert scene.metadata["quest"] == "Find the treasure"
+        assert "Hero" in scene.characters
+        assert "Guide" in scene.characters
+        assert scene.setting == "Dark cave"
 
 
 class TestGeneratedStory:

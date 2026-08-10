@@ -1,13 +1,13 @@
 """Tests for story streaming."""
 import pytest
 import asyncio
-from src.ai.story_generation.streamer import (
+from backend.ai.story_generation.streamer import (
     StoryStreamer,
     StreamConfig,
     StreamingStoryGenerator,
     async_iterate_chunks,
 )
-from src.ai.story_generation.types import StreamEvent, StoryGenre
+from backend.ai.story_generation.types import StreamEvent, StoryGenre
 
 
 class TestStreamConfig:
@@ -263,7 +263,7 @@ class TestStreamEvents:
     
     def test_scene_complete_event(self):
         """Test scene complete event."""
-        from src.ai.story_generation.types import StoryScene
+        from backend.ai.story_generation.types import StoryScene
         
         scene = StoryScene(
             scene_id="test",

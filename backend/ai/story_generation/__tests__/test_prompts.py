@@ -1,12 +1,12 @@
 """Tests for story generation prompts."""
 import pytest
-from src.ai.story_generation.prompts import (
+from backend.ai.story_generation.prompts import (
     build_system_prompt,
     build_story_prompt,
     get_prompt_template,
     GENRE_TEMPLATES,
 )
-from src.ai.story_generation.types import (
+from backend.ai.story_generation.types import (
     StoryGenre,
     StoryLength,
     StoryGenerationConfig,
