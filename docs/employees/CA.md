@@ -149,9 +149,14 @@ Reviewed all 7 open PRs against the frozen architecture. Per-PR findings recorde
 5. **PR #23:** Edited `docs/status/STATUS.md` — CA/DOC-owned status doc.
 
 ### Merge conflicts
-PRs #4, #22, #23, #24 were CONFLICTING/DIRTY (caused by PR #21 M06 transition landing on `main`; plus `package.json`/`package-lock.json` add/add). The CA resolved them **locally** on branches `resolve-pr22/23/24/25` and verified each merges cleanly to `main` (AD-010 remediation: reverted shared root config to `main`, kept module code). See `docs/status/PR-REVIEW-LOG.md`.
+PRs #4, #22, #23, #24 were CONFLICTING/DIRTY (caused by PR #21 M06 transition landing on `main`; plus `package.json`/`package-lock.json` add/add). The CA resolved them and **pushed the merge commits to the employees' PR branches** (AD-010 remediation: shared root config reverted to `main`, module code kept). All three now `MERGEABLE/CLEAN` on GitHub.
 
-> ⚠️ The resolved branches cannot be pushed and approved PR #25 cannot be merged because the current GitHub token lacks write scope (`comment`/`merge`/`push` all return 403). Local resolutions are ready to push once write access is granted.
+### Merge / comment delivery (2026-08-10)
+- ✅ Posted architecture review comments on all 7 PRs (#4, #20, #22, #23, #24, #26 request changes; #25 approved).
+- ✅ Pushed conflict resolutions to PR branches #22 (`5f04b4c..3931d54`), #23 (`af74d0c..f102028`), #24 (`9755731..c69aeea`).
+- ✅ Merged approved PR #25 to `main` (commit `9176802`, state=MERGED).
+
+> The request-changes PRs (#22/#23/#24) are now conflict-free but kept on "request changes" because employees must still add module-local configs (the CA's revert of root `package.json`/`tsconfig.json` removed shared deps their `.tsx` code needs). Mergeable ≠ architecturally complete.
 
 ---
 
@@ -173,11 +178,12 @@ PRs #4, #22, #23, #24 were CONFLICTING/DIRTY (caused by PR #21 M06 transition la
 - [x] Recorded drift in `docs/status/STATUS.md` (Architecture Drift Log + Known Issues)
 - [x] Created `docs/status/PR-REVIEW-LOG.md` with full per-PR findings + resolution status
 - [x] Updated `docs/employees/CA.md` with progress and completion status
-- [ ] **BLOCKED:** Post "request changes" comments to PRs — token lacks write scope (403)
-- [ ] **BLOCKED:** Merge approved PR #25 — token lacks write scope (403)
-- [ ] **BLOCKED:** Push resolved branches `resolve-pr22/23/24` — token lacks `contents:write` (403)
+- [x] Posted "request changes" comments to PRs #4/#20/#22/#23/#24/#26 (via new PAT)
+- [x] Posted approval comment on PR #25
+- [x] Pushed conflict-resolved merge commits to employees' PR branches #22/#23/#24
+- [x] Merged approved PR #25 to `main`
 
-> Note: GitHub PR review/comment/merge/push APIs all returned 403 (token lacks write scope). Reviews + local conflict resolutions were recorded in the repository documents — the designated CA communication channel per README "Communication Rules". Remote write operations require a token with `contents:write` and `pull-requests:write` grants.
+> Note: Initial GitHub token lacked write scope (403 on comment/merge/push). A new PAT with `repo` scope was provided; all remote write operations then succeeded. Reviews, conflict resolutions, and the approved merge were delivered to GitHub.
 
 ---
 

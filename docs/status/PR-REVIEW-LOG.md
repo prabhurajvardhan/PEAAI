@@ -166,31 +166,37 @@ The CA resolved all merge conflicts **locally** (in the workspace) and verified 
 `git merge-tree` dry-run of each resolved branch against `main` → **CLEAN (no conflicts)** for all four.
 
 ### ⚠️ Remote delivery blocked (permission)
-The current GitHub credential does **not** grant write access to the repository:
-- `gh pr review` / `gh pr comment` → **403 Resource not accessible by integration**
-- `PUT /pulls/{n}/merge` (merge via API) → **403**
-- `git push` → **403 Permission denied**
+~~The current GitHub credential does **not** grant write access to the repository.~~
 
-Therefore the CA **cannot**, with the present token:
-1. Post "request changes" / guidance comments on the PRs,
-2. Merge approved PR #25,
-3. Push the resolved branches (`resolve-pr22/23/24`) back to the employees' remote PR branches.
+**RESOLVED 2026-08-10:** A new PAT with `repo` scope was provided. All write operations now succeed.
 
-The local resolutions above are ready to push the moment write access is available.
+### Delivery actions completed (2026-08-10)
+- ✅ **Review comments posted** to all 7 PRs via `gh pr comment`:
+  - #4 (close), #20 (relocate to backend/ai + reuse types), #22 (revert root package.json), #23 (revert root package.json + STATUS.md), #24 (revert root tsconfig.json + package.json), #26 (revert .gitignore).
+  - #25 (🟢 APPROVED).
+- ✅ **Merge conflicts resolved and pushed** to the employees' PR branches (non-destructive merge commits; AD-010 remediation applied — shared root config reverted to `main`, module code kept):
+  - PR #22 → `feature/ui-005-conversation-engine` `5f04b4c..3931d54`
+  - PR #23 → `feature/ui-integration` `af74d0c..f102028`
+  - PR #24 → `feature/auth-ui` `9755731..c69aeea`
+  - All three now `MERGEABLE/CLEAN` on GitHub.
+- ✅ **Approved PR #25 merged** to `main` (commit `9176802`, state=MERGED, mergedBy=prabhurajvardhan).
+
+### Nuance on the conflict-resolved request-changes PRs (#22, #23, #24)
+The branches are now **conflict-free and mergeable**, and the AD-010 shared-infra violation is physically fixed (root `package.json`/`package-lock.json`/`tsconfig.json` reverted to `main`). However the employees' `.tsx` component code still needs `react`/`react-dom`/`@testing-library/*`, which the revert removed from the root. Employees must add **module-local** configs (per the review comments) before the code will build/test. The CA therefore kept the "request changes" verdict — mergeable ≠ architecturally complete.
 
 ### What the employees must still do (their own branches)
-These edits touch **employees' own PR branches**, which only the employees (or a token with `contents:write`) can update. The CA cannot rewrite their branches remotely. Each employee must apply the same CA-mandated remediation on their branch:
+The CA has already pushed the conflict-resolved merge commits. Remaining work per employee (per the posted review comments):
 
-- **UI-005 (#22):** On your branch, revert root `package.json` + `package-lock.json` to `main`. Add a module-local `src/conversation/package.json` if you need `react`/`react-dom`. Keep `src/conversation/vitest.config.ts`. Rebase onto `main`.
-- **UI-009 (#23):** Revert root `package.json` + `package-lock.json` to `main`. **Revert your `docs/status/STATUS.md` edits** — status docs are CA/DOC-owned; report completion in `docs/employees/UI-009.md` only. Add a module-local `package.json` under `src/app/` if needed. Rebase onto `main`.
-- **UI-003 (#24):** **Revert root `tsconfig.json` to `main`** (your `include` whitelist excludes every other module from the build). Revert root `package.json` + `package-lock.json` to `main`. Add a module-local `tsconfig.json` under `src/components/auth/` for JSX support. Rebase onto `main`.
-- **UI-002 (#26):** Revert root `.gitignore`. No rebase needed (already mergeable).
-- **UI-001 (#4):** Close the PR. M01 is delivered via merged PR #6.
-- **BA-006 (#20):** Relocate `src/ai/story_generation/` → `backend/ai/story_generation/`; reuse `StoryScene`/story types from `backend/ai/routing/story/types.py`. No rebase needed (already mergeable).
-- **UI-004 (#25):** ✅ Approved, ready to merge.
+- **UI-005 (#22):** Add a module-local `src/conversation/package.json` for `react`/`react-dom`/`@testing-library/*`. Keep `src/conversation/vitest.config.ts`. (Conflicts already resolved by CA.)
+- **UI-009 (#23):** Report completion in `docs/employees/UI-009.md` (do NOT edit `docs/status/STATUS.md` — CA reverted it). Add a module-local `package.json` under `src/app/` if needed. (Conflicts already resolved by CA.)
+- **UI-003 (#24):** Add a module-local `tsconfig.json` under `src/components/auth/` for JSX support (root `tsconfig.json` reverted by CA). Add module-local `package.json` for deps. (Conflicts already resolved by CA.)
+- **UI-002 (#26):** Revert root `.gitignore`. (Already mergeable; no conflict.)
+- **UI-001 (#4):** Close the PR. M01 delivered via merged PR #6.
+- **BA-006 (#20):** Relocate `src/ai/story_generation/` → `backend/ai/story_generation/`; reuse `StoryScene`/story types from `backend/ai/routing/story/types.py`. (Already mergeable; no conflict.)
+- **UI-004 (#25):** ✅ Merged.
 
 ---
 
 ## Last Updated
 
-2026-08-10 — CA resolved conflicts locally for PRs #22/#23/#24/#25; remote write blocked by token scope (403).
+2026-08-10 — CA posted all 7 PR review comments, resolved+pushed conflicts for #22/#23/#24, merged approved #25 (write access restored via new PAT).
