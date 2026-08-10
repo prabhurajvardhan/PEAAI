@@ -296,6 +296,21 @@ M01 through M03 require >80% test coverage before moving to next sprint
 
 ---
 
+## AD-010: Shared Infrastructure Ownership
+
+| Field | Value |
+|-------|-------|
+| Decision ID | AD-010 |
+| Date | 2026-08-10 |
+| Status | Accepted |
+| Context | Multiple module PRs edited shared root files (`package.json`, `tsconfig.json`, `.gitignore`) and CA/DOC-owned status documents, causing cross-module build regressions and merge conflicts. One PR narrowed the root `tsconfig.json` `include` so that other modules were excluded from compilation. |
+| Decision | Shared repository infrastructure — root `package.json`, root `tsconfig.json`, root `.gitignore`, and `docs/status/*` — is owned exclusively by the Chief Architect (CA) and Documentation Engineer (DOC-001). Individual module tasks MUST use module-local configuration (`src/<module>/package.json`, `src/<module>/tsconfig.json`, `src/<module>/vitest.config.ts`) and MUST NOT modify shared root files. |
+| Rationale | - Prevents one module from altering the build/test toolchain for all modules<br>- Keeps module PRs mergeable (no `package.json`/lockfile add/add conflicts)<br>- Enforces module independence (AD-003)<br>- Single owner for project-wide policy (lockfiles, dependency ignores) |
+| Consequences | Module owners must add module-local configs; project-wide dependency or runner changes require a CA/DOC decision. |
+| Reversal Risk | Low |
+
+---
+
 ## Future Decisions Needed
 
 | ID | Topic | Status | Priority |
@@ -321,4 +336,5 @@ When a decision needs to be reversed or modified:
 
 ## Last Updated
 
+2026-08-10 - AD-010 added (Shared Infrastructure Ownership)
 2024-01-01 - Decisions documented

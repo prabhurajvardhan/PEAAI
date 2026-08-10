@@ -125,7 +125,14 @@ Based on dependencies:
 
 | Date | Drift Detected | Action Taken | Status |
 |------|----------------|--------------|--------|
-| - | None | - | - |
+| 2026-08-10 | PR #4 (UI-001): 2,971 `node_modules` files committed + work already merged via PR #6 | Requested close; PR is stale/superseded | 🔴 Open |
+| 2026-08-10 | PR #20 (BA-006): M08 code placed in `src/ai/` instead of `backend/ai/` (MODULES.md); duplicated `StoryScene` type vs BA-001 | Requested relocation to `backend/ai/` + reuse of M08 types | 🔴 Open |
+| 2026-08-10 | PR #22 (UI-005): root `package.json` modified (jest→vitest, react deps) — shared infra | Requested revert; use module-local config | 🟡 Open |
+| 2026-08-10 | PR #23 (UI-009): root `package.json` + `docs/status/STATUS.md` modified — shared infra/status doc | Requested revert; report in employee doc only | 🟡 Open |
+| 2026-08-10 | PR #24 (UI-003): root `tsconfig.json` `include` narrowed — excludes all other modules from build; root `package.json` modified | Requested revert; add module-local tsconfig | 🔴 Open |
+| 2026-08-10 | PR #26 (UI-002): root `.gitignore` modified (`**/package-lock.json`) — shared infra | Requested revert | 🟡 Open |
+
+Full per-PR findings: `docs/status/PR-REVIEW-LOG.md`
 
 ---
 
@@ -133,7 +140,9 @@ Based on dependencies:
 
 | Issue | Severity | Status | Resolution |
 |-------|----------|--------|-----------|
-| None | - | - | - |
+| PR #24 root `tsconfig.json` excludes other modules from build | High | 🔴 Open | UI-003 must revert root tsconfig; use module-local config |
+| PR #4 committed `node_modules` (2,971 files) | High | 🔴 Open | Close PR #4; M01 delivered via merged PR #6 |
+| Multiple PRs edit shared root config (`package.json`, `.gitignore`, `tsconfig.json`) | Medium | 🟡 Open | Enforce module-local configs; CA/DOC own shared infra |
 
 ---
 
@@ -152,4 +161,5 @@ Based on dependencies:
 
 ## Last Updated
 
+2026-08-10 - CA reviewed all 7 open PRs; drift logged (see PR-REVIEW-LOG.md)
 2026-08-02 - GE-002 T-016 (Pixel Assignment Engine) completed
