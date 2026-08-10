@@ -17,19 +17,6 @@
     "rootDir": "./src",
     "types": ["jest", "node"]
   },
-  "include": [
-    "src/components/**/*.ts",
-    "src/components/**/*.tsx",
-    "src/pages/**/*.ts",
-    "src/pages/**/*.tsx",
-    "src/foundation/components/**/*.ts",
-    "src/foundation/components/**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/foundation/components/__tests__/**/*",
-    "src/foundation/theme/**/*.ts",
-    "src/foundation/theme/**/*.tsx"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }
