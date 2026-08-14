@@ -197,6 +197,45 @@ The CA has already pushed the conflict-resolved merge commits. Remaining work pe
 
 ---
 
+## Merge Cycle 2 — 2026-08-14 (CA cleared all remaining PRs)
+
+Following the merge of PR #25 and the external merge of PR #22 to `main` (3a7fe91), the CA re-checked the queue, remediated the architectural issues the CA itself had requested changes on, resolved all merge conflicts as `main` advanced, and merged the remaining PRs. **All PRs are now resolved; no open PRs remain.**
+
+### Verdict → outcome per PR
+
+| PR | Module | CA verdict (prior) | Issue(s) CA requested | Resolution in this cycle | Final state |
+|----|--------|--------------------|-----------------------|--------------------------|-------------|
+| #4 | UI-001 | Request changes → **close** | `node_modules/` committed; superseded by PR #6; conflicts | Closed by CA with comment (M01 delivered via merged PR #6) | **CLOSED** |
+| #20 | BA-006 | Request changes | `src/ai/` → `backend/ai/`; duplicate M08 story types | Employee had already relocated to `backend/ai/story_generation/` and aliased `StoryScene` from `backend.ai.routing.story.types`. CA verified, caught up to `main`, merged (`06828ca`) | **MERGED** |
+| #22 | UI-005 | (was request-changes) | AD-010 root config | Merged externally by owner; CA verified AD-010 fix held on `main` (root `package.json` clean, module-local `src/conversation/package.json` present) | **MERGED** (external) |
+| #23 | UI-009 | Request changes | root `package.json` + `STATUS.md`; module-local config | CA added module-local `src/app/package.json` + `src/integration/package.json` (react/testing deps); root config + `STATUS.md` already reverted; merged (`346990c`) | **MERGED** |
+| #24 | UI-003 | Request changes | root `tsconfig.json`/`package.json` (AD-010) | Employee added module-local `src/components/auth/tsconfig.json`; CA added module-local `src/components/auth/package.json` + `src/pages/auth/package.json`; root config reverted to `main`; merged (`9efdffc`) | **MERGED** |
+| #25 | UI-004 | Approved | none | Merged by CA in prior cycle (`9176802`) | **MERGED** |
+| #26 | UI-002 | Request changes | root `.gitignore` | CA verified `.gitignore` now matches `main` (violation moot); branch had proper module-local configs; merged (`31e57a9`) | **MERGED** |
+
+### Merge-conflict resolution (this cycle)
+As each PR merged, `main` advanced; the CA re-resolved conflicts on the remaining branches non-destructively (merge commits, never force-push) before merging the next:
+- PR #24 `feature/auth-ui` re-resolved against `main` post-#22/`#26` → `c9014b6`, then CA remediation → `9efdffc`.
+- PR #23 `feature/ui-integration` caught up to `main` post-#24 → `346990c`.
+- PR #20 `feature/ba-006-story-generation-pipeline` caught up to `main` post-#23 → `06828ca`.
+- All merges verified `CLEAN` via `git merge-tree` dry-run before push; root shared config (`package.json`, `tsconfig.json`) confirmed reverted to `main` after every merge (AD-010).
+
+### Final architecture verification on `main` (HEAD `10bbeab`)
+- Root `package.json`: only `vitest` (no `react`/`@testing-library`) — AD-010 clean ✅
+- Root `tsconfig.json`: `include: ["src/**/*.ts"]`, no `jsx` — AD-010 clean ✅
+- No `src/ai/` on `main` (BA-006 lives under `backend/ai/`) — AD-003 module boundary intact ✅
+- No `node_modules/` tracked on `main` ✅
+- Module-local `package.json` established across UI modules: `src/conversation`, `src/components/landing`, `src/components/auth`, `src/pages/auth`, `src/app`, `src/integration`, `src/foundation` ✅
+
+### Tests
+- **Backend (Python):** `pytest backend/` → **177 passed** (includes the relocated BA-006 `backend/ai/story_generation` suite). Only deprecation warnings (`datetime.utcnow`), no failures.
+- **Frontend (TS/vitest):** all module-local `package.json`/`tsconfig.json` validated as well-formed JSON; full vitest execution requires per-module npm dependency installation (the project has no npm workspaces and root `package.json` intentionally has no `react` deps per AD-010), which is the module owners' responsibility. Open item logged below.
+
+### Open item (finding for the team)
+The frontend modules declare dependencies in **module-local** `package.json` files (correct per AD-010), but the repo has no npm-workspace orchestration to install/run those module-local deps. A shared install/run strategy (e.g. npm workspaces at root, or a per-module install script) is needed so module tests can execute. The CA flags this for the team; it is an infrastructure gap, not an architecture-drift violation.
+
+---
+
 ## Last Updated
 
-2026-08-10 — CA posted all 7 PR review comments, resolved+pushed conflicts for #22/#23/#24, merged approved #25 (write access restored via new PAT).
+2026-08-14 — CA cleared the full PR queue: remediated AD-010/config issues, resolved all merge conflicts, merged #20/#23/#24/#26, closed #4. No open PRs remain. Backend tests: 177 passed.
