@@ -25,7 +25,7 @@ The reliable gating signal in V0.1. `backend/ai` is the only fully-implemented b
 
 - Python 3.11 (matches `backend/setup.py` `python_requires>=3.10`).
 - Installs `backend/requirements.txt` plus test-only deps (`httpx`, `pytest`, `pytest-asyncio`, `pytest-cov`) that the runtime-only requirements file omits.
-- Runs `pytest backend/ --cov=backend --cov-report=term-missing --cov-report=xml`.
+- Runs `python -m pytest backend/ --cov=backend --cov-report=term-missing --cov-report=xml`. Uses `python -m pytest` (not the bare `pytest` script) so the repo root is on `sys.path` and `from backend.ai...` imports resolve — the test files' own `sys.path` manipulation assumes the repo root is importable.
 - Uploads `coverage-backend.xml` as an artifact (14-day retention).
 - **Result on main: 177 passed, 46% coverage.**
 

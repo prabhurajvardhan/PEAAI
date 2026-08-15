@@ -50,8 +50,14 @@ jobs:
           pip install httpx pytest pytest-asyncio pytest-cov
 
       - name: Run backend unit tests with coverage
+        # Use `python -m pytest` (not the `pytest` console script): this puts the
+        # repo root (cwd) on sys.path so `from backend.ai...` imports resolve.
+        # The test files do sys.path manipulation that assumes the repo root is
+        # importable; `python -m pytest` guarantees that. Running the bare
+        # `pytest` script does not add cwd to sys.path and yields
+        # ModuleNotFoundError: No module named 'backend'.
         run: |
-          pytest backend/ \
+          python -m pytest backend/ \
             --cov=backend \
             --cov-report=term-missing \
             --cov-report=xml:coverage-backend.xml \
