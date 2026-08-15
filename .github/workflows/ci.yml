@@ -182,4 +182,7 @@ jobs:
 
       - name: Run module unit tests (vitest)
         working-directory: ${{ matrix.path }}
-        run: npx vitest run --coverage
+        # No --coverage: the module package.json files do not declare
+        # @vitest/coverage-v8, so the flag would fail with "MISSING DEPENDENCY".
+        # Coverage is reported for the backend job (pytest-cov) where supported.
+        run: npx vitest run

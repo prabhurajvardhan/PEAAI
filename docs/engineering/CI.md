@@ -29,6 +29,8 @@ The reliable gating signal in V0.1. `backend/ai` is the only fully-implemented b
 - Uploads `coverage-backend.xml` as an artifact (14-day retention).
 - **Result on main: 177 passed, 46% coverage.**
 
+> **Manifest fix applied in this PR:** `backend/requirements.txt` listed `magic>=0.4.27`, but the PyPI package `magic` tops out at 0.1.1 (`No matching distribution found`), which blocked `pip install` entirely. Corrected to `python-magic>=0.4.27` (the package that provides the `magic` module; 0.4.27 exists as a pure-Python wheel). This is a dependency-name correction, not a functionality change — no backend code imports `magic` yet (the storage module is unimplemented), and the `import magic` API is unchanged.
+
 ### 2. `frontend-build-lint` — build + lint (DIAGNOSTIC in V0.1)
 
 - Node 20 LTS (vitest requires `^18 || >=20`; Node 20 is the safe LTS on GitHub-hosted runners).
@@ -66,7 +68,7 @@ A matrix over the modules that have **both** a `package.json` and test files on 
 
 - Each module is a separate matrix leg → separate check on the PR for granular visibility.
 - `npm install` (not `npm ci`): only `src/foundation` ships a lockfile; the others declare deps but no lockfile yet.
-- `npx vitest run --coverage`.
+- `npx vitest run` (no `--coverage` — the module `package.json` files do not declare `@vitest/coverage-v8`; coverage is reported for the backend job where `pytest-cov` is available).
 - **Diagnostic / `continue-on-error`** for V0.1: surfacing the broken modules is the point, but blocking every PR on a broken sibling module is not. Foundation and landing are green.
 
 ## Integration tests
