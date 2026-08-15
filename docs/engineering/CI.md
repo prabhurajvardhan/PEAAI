@@ -47,33 +47,103 @@ The reliable gating signal in V0.1. `backend/ai` is the only fully-implemented b
 
 Each step runs and its real pass/fail is shown as a warning on the PR. Flip to gating once a root build config and eslint are added.
 
-### 3. `frontend-root-tests` — root unit tests, jest (DIAGNOSTIC in V0.1)
+### 3. `frontend-root-tests` — root unit tests under JEST (GATING)
 
-- Node 20, `npm ci`, then `npm test -- --ci --reporters=default` (jest).
-- The root jest config matches `**/__tests__/**/*.test.ts` only (not `.tsx`).
-- This is the **only** runner for modules that have tests but **no module-local `package.json`**: `animation`, `graphics`, `performance`, `story-viz`, `companion`, `layouts/home`, `transition`, `pages/landing`.
-- **Diagnostic / `continue-on-error`** because some suites `import from 'vitest'` and cannot run under jest — a known V0.1 jest/vitest mismatch (the repo is mid-migration to module-local vitest).
-- **Result on main: 25 suites pass / 15 fail (vitest imports), 737 tests pass.**
+The repo is mid-migration from jest to vitest (V0.1). The root jest config globs `**/__tests__/**/*.test.ts`, which mixes two populations:
 
-### 4. `frontend-module-tests` — module-local vitest (DIAGNOSTIC in V0.1, per-module)
+- **jest-authored suites** (animation, graphics, performance, story-viz): use `describe/it/expect` globals and `jest.fn`/`jest.useFakeTimers`. 25 suites / 737 tests.
+- **vitest-authored suites** (`import { ... } from 'vitest'`) in app, conversation, companion, transition: cannot run under jest (`Vitest cannot be imported in a CommonJS module using require()`).
 
-A matrix over the modules that have **both** a `package.json` and test files on V0.1 main:
+**CI fix (test-configuration — not a hidden failure):** this job runs jest with `--testPathIgnorePatterns="src/(app|conversation|companion|transition)/"` so jest runs ONLY the 25 jest-compatible suites. The vitest suites are run by their proper runner:
 
-| Module | Result on main |
-|--------|----------------|
-| `src/foundation` | 52 passed — green |
-| `src/components/landing` | 22 passed — green |
-| `src/conversation` | 8 failed + worker crash — pre-existing (PR #22 merged with failing tests) |
-| `src/app` | 1 suite transform error, 24 tests pass — pre-existing |
+- app, conversation → `frontend-module-tests` vitest matrix.
+- companion, transition → `frontend-root-vitest` job (those modules have no module-local package.json).
 
-- Each module is a separate matrix leg → separate check on the PR for granular visibility.
+**Result on main: 25 suites / 737 tests pass.** This job is gating.
+
+### 4. `frontend-root-vitest` — root vitest for module-less modules (GATING)
+
+`companion` and `transition` author tests with `import { ... } from 'vitest'` but have NO module-local package.json/vitest config (they predate the AD-010 module-local convention). They cannot run under jest. The root `devDependencies` include vitest, so this job runs them under the root vitest:
+
+```
+npx vitest run src/companion src/transition
+```
+
+Default (node) environment — these tests do not use the DOM.
+
+**Result on main: 12 suites / 221 tests pass.** This job is gating.
+
+### 5. `frontend-module-tests` — module-local vitest (per-leg gating)
+
+Per the AD-010 module-local config convention, each UI module owns its own `package.json` + `vitest.config.ts`. This matrix runs vitest for every module that has BOTH a `package.json` and test files. Each module is a separate check. Gating policy is per-leg via `allow_failure`:
+
+| Module | Result on main | Gating |
+|--------|----------------|--------|
+| `src/foundation` | 52 passed — green | gating (`allow_failure: false`) |
+| `src/components/landing` | 22 passed — green | gating (`allow_failure: false`) |
+| `src/conversation` | StreamManager worker OOM — pre-existing | diagnostic (`allow_failure: true`) |
+| `src/app` | ModuleIntegration react-resolution failure — pre-existing | diagnostic (`allow_failure: true`) |
+
 - `npm install` (not `npm ci`): only `src/foundation` ships a lockfile; the others declare deps but no lockfile yet.
 - `npx vitest run` (no `--coverage` — the module `package.json` files do not declare `@vitest/coverage-v8`; coverage is reported for the backend job where `pytest-cov` is available).
-- **Diagnostic / `continue-on-error`** for V0.1: surfacing the broken modules is the point, but blocking every PR on a broken sibling module is not. Foundation and landing are green.
+- The two diagnostic legs keep their failures **visible** (red on the leg with full logs). `continue-on-error` only prevents a pre-existing sibling defect from blocking unrelated PRs — this is the documented-pre-existing case, not a hidden/fixable failure.
 
 ## Integration tests
 
 Not present in V0.1. No integration test suite exists yet. When one is added, a new job should be inserted between module tests and the PASS/FAIL gate.
+
+## Failed-check diagnosis (CI debugging pass)
+
+Every failed check from the CI runs on PR #27 was inspected from the GitHub Actions logs, root-caused, and classified. Fixable CI/dependency/test-configuration problems were fixed; genuine pre-existing V0.1 code problems were documented (not artificially made to pass).
+
+### Backend tests + coverage (gating) — fixed, now GREEN
+
+| | |
+|---|---|
+| Root cause | Two issues: (1) `pip install -r backend/requirements.txt` failed — `magic>=0.4.27` has no matching PyPI distribution (PyPI `magic` tops out at 0.1.1; intended package is `python-magic`). (2) `pytest backend/` (bare console script) failed at collection with `ModuleNotFoundError: No module named 'backend'` — the test files do `sys.path.insert(0, Path(__file__).parent.parent.parent)` which from `backend/ai/__tests__/` resolves to `backend/` (off-by-one, not the repo root); masked only when pytest runs as `python -m pytest` (cwd on sys.path). |
+| Classification | (1) dependency problem; (2) test-configuration / invocation problem. Both pre-existing in V0.1, surfaced by CI. |
+| Fix | (1) `magic>=0.4.27` → `python-magic>=0.4.27` in `backend/requirements.txt` (dependency-name correction; no backend code imports `magic` yet). (2) workflow invokes `python -m pytest backend/` so the repo root is on `sys.path`. |
+| Test result | 177 passed, 46% coverage, exit 0. Gating, green. |
+
+### Frontend root unit tests (jest) — fixed, now GATING + GREEN
+
+| | |
+|---|---|
+| Root cause | The root jest config globs `**/__tests__/**/*.test.ts`, matching both jest-authored and vitest-authored suites. The 15 vitest suites (`import { ... } from 'vitest'` in app, conversation, companion, transition) fail under jest with `Vitest cannot be imported in a CommonJS module using require()`. |
+| Classification | test-configuration problem (wrong runner for vitest suites), pre-existing V0.1. |
+| Fix | Run jest with `--testPathIgnorePatterns="src/(app|conversation|companion|transition)/"` so jest runs only the 25 jest-compatible suites. The excluded vitest suites are run by their proper runner (module vitest matrix + new root-vitest job) — they are not hidden, they run elsewhere. |
+| Test result | 25 suites / 737 tests pass, exit 0. Gating, green. |
+
+### Frontend root vitest (companion + transition) — NEW job, GATING + GREEN
+
+| | |
+|---|---|
+| Root cause | `companion` and `transition` tests are authored with `import { ... } from 'vitest'` but those modules have NO module-local `package.json`/vitest config (they predate AD-010). They were being picked up by the root jest job, which cannot run them. |
+| Classification | test-configuration / coverage gap, pre-existing V0.1. |
+| Fix | Added a `frontend-root-vitest` job that runs `npx vitest run src/companion src/transition` using the root-installed vitest (default node env — these tests do not use the DOM). This honestly covers suites that were previously failing under jest. |
+| Test result | 12 suites / 221 tests pass, exit 0. Gating, green. |
+
+### Frontend conversation tests (vitest) — diagnostic; real failure now visible
+
+| | |
+|---|---|
+| Root cause | (1) Surface error: `MISSING DEPENDENCY: Cannot find dependency 'jsdom'` — the module `vitest.config.ts` sets `environment: 'jsdom'` but `jsdom` was not in `devDependencies`. (2) Beneath that (after jsdom is provided): `StreamManager.test.ts` crashes the vitest worker with `Worker terminated due to reaching memory limit: JS heap out of memory` (`ERR_WORKER_OUT_OF_MEMORY`), caused by the `StreamManager` streaming loop / test. Reproduced locally with jsdom installed. |
+| Classification | (1) dependency problem (missing devDependency) — fixed. (2) existing V0.1 code/test problem — documented, NOT fixed (would require modifying application code, which is out of CI scope). |
+| Fix | (1) Added `jsdom` to `src/conversation/package.json` devDependencies (the vitest config requires it). This makes the REAL failure surface instead of the jsdom red herring. (2) No code fix — documented. The leg remains `allow_failure: true` so the OOM stays visible (red, with full logs) without blocking unrelated PRs. |
+| Test result | 5 suites / 85 tests pass; `StreamManager.test.ts` worker OOM (1 file failed). Diagnostic, visible. |
+
+### Frontend app tests (vitest) — diagnostic; real failure now visible
+
+| | |
+|---|---|
+| Root cause | (1) Surface error: `MISSING DEPENDENCY: Cannot find dependency 'jsdom'` (same as conversation). (2) Beneath that: `ModuleIntegration.test.ts` imports `../../integration/ModuleIntegration.tsx` (i.e. `src/integration/ModuleIntegration.tsx`, a file OUTSIDE the `src/app` module). That file imports `react`, but `src/integration` has no `package.json`/`node_modules` and `react` is not at the repo root, so vite cannot resolve `react` from a file outside `src/app`. This breaks AD-010 module-local isolation (an app test reaches across module boundaries into a module that has no declared `react` dependency). |
+| Classification | (1) dependency problem — fixed. (2) existing V0.1 code/test problem (cross-module dependency breaking module-local isolation) — documented, NOT fixed (would require moving the test or adding a package.json to `src/integration`, both application changes out of CI scope). |
+| Fix | (1) Added `jsdom` to `src/app/package.json` devDependencies. (2) No code fix — documented. The leg remains `allow_failure: true` so the failure stays visible. |
+| Test result | 4 suites / 24 tests pass; `ModuleIntegration.test.ts` fails (react resolution). Diagnostic, visible. |
+
+### Frontend build + lint (diagnostic) — unchanged, documented V0.1 misconfig
+
+`npm run build` (tsc) and `npm run lint` (eslint) remain diagnostic: root `tsconfig.json` has no `jsx`, eslint is not installed/configured. These are pre-existing V0.1 misconfigurations surfaced (not hidden) by CI. No fix applied — they require root build/lint setup, which is a separate task.
 
 ## What the CI does NOT do
 
