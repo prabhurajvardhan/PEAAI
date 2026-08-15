@@ -18,6 +18,7 @@ class LLMProvider(Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     OLLAMA = "ollama"
+    BEDROCK = "bedrock"
 
 
 @dataclass

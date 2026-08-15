@@ -2,6 +2,7 @@
 LLM client for interacting with language model APIs.
 """
 import asyncio
+import json
 import logging
 import time
 from typing import AsyncGenerator, Callable, List, Optional, Dict, Any
@@ -193,6 +194,39 @@ class RequestFormatter:
             "stream": request.stream,
         }
 
+    def format_bedrock(self, request: LLMRequest) -> Dict[str, Any]:
+        """
+        Format request for Amazon Bedrock API (Nova models).
+        
+        Nova models use a specific request format with messages.
+        """
+        # Build messages array for Nova
+        messages = []
+        for msg in request.messages:
+            if msg.role == MessageRole.SYSTEM:
+                messages.append({
+                    "role": "user",
+                    "content": [{"text": f"<start_of_turn>\n{msg.content}"}]
+                })
+            elif msg.role == MessageRole.USER:
+                messages.append({
+                    "role": "user", 
+                    "content": [{"text": f"<start_of_turn>\n{msg.content}"}]
+                })
+            elif msg.role == MessageRole.ASSISTANT:
+                messages.append({
+                    "role": "model",
+                    "content": [{"text": f"{msg.content}\n<end_of_turn>"}]
+                })
+        
+        return {
+            "messages": messages,
+            "inferenceConfig": {
+                "temperature": request.temperature,
+                "maxTokens": request.max_tokens or default_config.default_max_tokens,
+            },
+        }
+
 
 class ResponseParser:
     """
@@ -250,6 +284,45 @@ class ResponseParser:
             raw_response=response,
         )
 
+    def parse_bedrock(self, response: Dict[str, Any], model: str) -> LLMResponse:
+        """Parse Amazon Bedrock API response (Nova models)."""
+        # Extract content from Nova response
+        content = ""
+        usage_data = {}
+        
+        if "output" in response and "message" in response["output"]:
+            content = response["output"]["message"]["content"][0].get("text", "")
+        
+        # Extract usage information
+        if "usage" in response:
+            usage_data = {
+                "prompt_tokens": response["usage"].get("inputTokens", 0),
+                "completion_tokens": response["usage"].get("outputTokens", 0),
+                "total_tokens": response["usage"].get("totalTokens", 0),
+            }
+        else:
+            usage_data = {
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0,
+            }
+
+        # Extract finish reason
+        finish_reason = "stop"
+        if "stopReason" in response:
+            if response["stopReason"] == "end_turn":
+                finish_reason = "stop"
+            else:
+                finish_reason = response["stopReason"]
+
+        return LLMResponse(
+            content=content,
+            model=model,
+            usage=usage_data,
+            finish_reason=finish_reason,
+            raw_response=response,
+        )
+
     def parse_stream_openai(self, chunk: Dict[str, Any]) -> Optional[StreamChunk]:
         """Parse OpenAI streaming chunk."""
         delta = chunk.get("choices", [{}])[0].get("delta", {})
@@ -262,6 +335,36 @@ class ResponseParser:
             delta=delta.get("content", ""),
             index=chunk.get("choices", [{}])[0].get("index", 0),
             finish_reason=chunk.get("choices", [{}])[0].get("finish_reason"),
+        )
+
+    def parse_stream_bedrock(self, chunk: Dict[str, Any]) -> Optional[StreamChunk]:
+        """Parse Amazon Bedrock streaming chunk (Nova models)."""
+        content = ""
+        finish_reason = None
+        index = 0
+
+        if "chunk" in chunk:
+            inner = chunk["chunk"].get("bytes", b"")
+            try:
+                inner_data = json.loads(inner.decode("utf-8"))
+                if "text" in inner_data:
+                    content = inner_data["text"]
+                if "annotations" in inner_data:
+                    finish_reason = "stop"
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                pass
+
+        if "stopReason" in chunk:
+            finish_reason = chunk["stopReason"]
+
+        if not content and finish_reason is None:
+            return None
+
+        return StreamChunk(
+            content=content,
+            delta=content,
+            index=index,
+            finish_reason=finish_reason,
         )
 
 
@@ -308,6 +411,7 @@ class LLMClient:
             headers["anthropic-version"] = self.config.anthropic_settings.get("version", "2023-06-01")
         elif self.config.provider == LLMProvider.OLLAMA:
             headers["Content-Type"] = "application/json"
+        # Note: BEDROCK uses boto3, not HTTP headers
 
         return headers
 
@@ -319,6 +423,7 @@ class LLMClient:
             return "/v1/messages"
         elif self.config.provider == LLMProvider.OLLAMA:
             return "/api/generate"
+        # Note: BEDROCK uses boto3, not REST endpoint
         return "/chat/completions"
 
     def _format_request(self, request: LLMRequest) -> Dict[str, Any]:
@@ -329,6 +434,8 @@ class LLMClient:
             return self.formatter.format_anthropic(request)
         elif self.config.provider == LLMProvider.OLLAMA:
             return self.formatter.format_ollama(request)
+        elif self.config.provider == LLMProvider.BEDROCK:
+            return self.formatter.format_bedrock(request)
         return self.formatter.format_openai(request)
 
     def _parse_response(self, response: Dict[str, Any]) -> LLMResponse:
@@ -339,6 +446,8 @@ class LLMClient:
             return self.parser.parse_anthropic(response)
         elif self.config.provider == LLMProvider.OLLAMA:
             return self.parser.parse_ollama(response)
+        elif self.config.provider == LLMProvider.BEDROCK:
+            return self.parser.parse_bedrock(response, self.config.model)
         return self.parser.parse_openai(response)
 
     def _handle_error(self, status_code: int, response_text: str) -> None:
@@ -381,6 +490,12 @@ class LLMClient:
             AuthenticationError: On auth failure
             TokenLimitError: On token limit
         """
+        # Handle Bedrock separately since it uses boto3
+        if self.config.provider == LLMProvider.BEDROCK:
+            return await self._complete_bedrock(
+                messages, model, temperature, max_tokens, system_prompt
+            )
+
         # Add system prompt if provided
         if system_prompt:
             messages = [Message(role=MessageRole.SYSTEM, content=system_prompt)] + messages
@@ -429,6 +544,94 @@ class LLMClient:
 
         raise LLMError(f"Request failed after {self.config.retry_attempts} attempts: {last_error}")
 
+    async def _complete_bedrock(
+        self,
+        messages: List[Message],
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        system_prompt: Optional[str] = None,
+    ) -> LLMResponse:
+        """
+        Send a completion request to Amazon Bedrock using boto3.
+        
+        Args:
+            messages: List of conversation messages
+            model: Model to use (defaults to config)
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens in response
+            system_prompt: Optional system prompt to prepend
+
+        Returns:
+            LLMResponse with the model's response
+        """
+        # Import boto3 here to avoid hard dependency when not using Bedrock
+        try:
+            import boto3
+        except ImportError:
+            raise LLMError("boto3 is required for Bedrock. Install with: pip install boto3")
+
+        # Add system prompt if provided
+        if system_prompt:
+            messages = [Message(role=MessageRole.SYSTEM, content=system_prompt)] + messages
+
+        # Truncate messages if needed
+        messages = self.token_manager.truncate_messages(messages)
+
+        # Use provided model or config
+        bedrock_model = model or self.config.bedrock_settings.get("bedrock_model_id", "amazon.nova-micro-v1:0")
+        aws_region = self.config.bedrock_settings.get("aws_region", "us-east-1")
+
+        # Create request
+        request = LLMRequest(
+            messages=messages,
+            model=bedrock_model,
+            temperature=temperature if temperature is not None else self.config.default_temperature,
+            max_tokens=max_tokens or self.config.default_max_tokens,
+        )
+
+        formatted = self._format_request(request)
+
+        # Create Bedrock runtime client
+        try:
+            bedrock_client = boto3.client(
+                service_name="bedrock-runtime",
+                region_name=aws_region
+            )
+        except Exception as e:
+            raise AuthenticationError(f"Failed to create Bedrock client: {e}")
+
+        # Invoke model
+        try:
+            response = bedrock_client.invoke_model(
+                modelId=bedrock_model,
+                contentType="application/json",
+                accept="application/json",
+                body=json.dumps(formatted)
+            )
+        except Exception as e:
+            error_msg = str(e)
+            if "AccessDenied" in error_msg or "UnauthorizedException" in error_msg:
+                raise AuthenticationError(f"Bedrock access denied: {error_msg}")
+            elif "ThrottlingException" in error_msg or "ProvisionedThroughputExceededException" in error_msg:
+                raise RateLimitError(f"Bedrock rate limit exceeded: {error_msg}")
+            elif "ValidationException" in error_msg:
+                raise InvalidRequestError(f"Bedrock validation error: {error_msg}")
+            else:
+                raise LLMError(f"Bedrock API error: {error_msg}")
+
+        # Parse response
+        response_body = json.loads(response["body"].read().decode("utf-8"))
+        llm_response = self.parser.parse_bedrock(response_body, bedrock_model)
+
+        # Update token usage
+        self.token_manager.update_usage(
+            llm_response.usage["prompt_tokens"],
+            llm_response.usage["completion_tokens"]
+        )
+
+        return llm_response
+
     async def stream_complete(
         self,
         messages: List[Message],
@@ -450,6 +653,14 @@ class LLMClient:
         Yields:
             StreamChunk with partial responses
         """
+        # Handle Bedrock separately since it uses boto3 streaming
+        if self.config.provider == LLMProvider.BEDROCK:
+            async for chunk in self._stream_complete_bedrock(
+                messages, model, temperature, max_tokens, system_prompt
+            ):
+                yield chunk
+            return
+
         if system_prompt:
             messages = [Message(role=MessageRole.SYSTEM, content=system_prompt)] + messages
 
@@ -496,6 +707,87 @@ class LLMClient:
 
                 except json.JSONDecodeError:
                     continue
+
+    async def _stream_complete_bedrock(
+        self,
+        messages: List[Message],
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        system_prompt: Optional[str] = None,
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """
+        Stream a completion from Amazon Bedrock using boto3.
+        
+        Args:
+            messages: List of conversation messages
+            model: Model to use
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens in response
+            system_prompt: Optional system prompt
+
+        Yields:
+            StreamChunk with partial responses
+        """
+        # Import boto3 here to avoid hard dependency when not using Bedrock
+        try:
+            import boto3
+        except ImportError:
+            raise LLMError("boto3 is required for Bedrock streaming. Install with: pip install boto3")
+
+        # Add system prompt if provided
+        if system_prompt:
+            messages = [Message(role=MessageRole.SYSTEM, content=system_prompt)] + messages
+
+        # Truncate messages if needed
+        messages = self.token_manager.truncate_messages(messages)
+
+        # Use provided model or config
+        bedrock_model = model or self.config.bedrock_settings.get("bedrock_model_id", "amazon.nova-micro-v1:0")
+        aws_region = self.config.bedrock_settings.get("aws_region", "us-east-1")
+
+        # Create request
+        request = LLMRequest(
+            messages=messages,
+            model=bedrock_model,
+            temperature=temperature if temperature is not None else self.config.default_temperature,
+            max_tokens=max_tokens or self.config.default_max_tokens,
+        )
+
+        formatted = self._format_request(request)
+
+        # Create Bedrock runtime client
+        try:
+            bedrock_client = boto3.client(
+                service_name="bedrock-runtime",
+                region_name=aws_region
+            )
+        except Exception as e:
+            raise AuthenticationError(f"Failed to create Bedrock client: {e}")
+
+        # Invoke model with streaming
+        try:
+            response = bedrock_client.invoke_model_with_response_stream(
+                modelId=bedrock_model,
+                contentType="application/json",
+                accept="application/json",
+                body=json.dumps(formatted)
+            )
+        except Exception as e:
+            error_msg = str(e)
+            if "AccessDenied" in error_msg or "UnauthorizedException" in error_msg:
+                raise AuthenticationError(f"Bedrock access denied: {error_msg}")
+            elif "ThrottlingException" in error_msg or "ProvisionedThroughputExceededException" in error_msg:
+                raise RateLimitError(f"Bedrock rate limit exceeded: {error_msg}")
+            else:
+                raise LLMError(f"Bedrock streaming error: {error_msg}")
+
+        # Process streaming response
+        for event in response["body"]:
+            chunk_data = event
+            chunk = self.parser.parse_stream_bedrock(chunk_data)
+            if chunk:
+                yield chunk
 
     async def close(self) -> None:
         """Close the HTTP client."""
