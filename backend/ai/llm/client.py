@@ -198,34 +198,37 @@ class RequestFormatter:
         """
         Format request for Amazon Bedrock API (Nova models).
         
-        Nova models use a specific request format with messages.
+        Nova models use standard messages format with a system prompt field.
         """
-        # Build messages array for Nova
-        messages = []
+        # Separate system message from conversation messages
+        system_content = ""
+        conversation_messages = []
+        
         for msg in request.messages:
             if msg.role == MessageRole.SYSTEM:
-                messages.append({
-                    "role": "user",
-                    "content": [{"text": f"<start_of_turn>\n{msg.content}"}]
-                })
-            elif msg.role == MessageRole.USER:
-                messages.append({
-                    "role": "user", 
-                    "content": [{"text": f"<start_of_turn>\n{msg.content}"}]
-                })
-            elif msg.role == MessageRole.ASSISTANT:
-                messages.append({
-                    "role": "model",
-                    "content": [{"text": f"{msg.content}\n<end_of_turn>"}]
+                system_content = msg.content
+            else:
+                # Map roles to Nova format (user/model, not user/assistant)
+                role = "user" if msg.role == MessageRole.USER else "model"
+                conversation_messages.append({
+                    "role": role,
+                    "content": [{"text": msg.content}]
                 })
         
-        return {
-            "messages": messages,
+        # Build request with Nova message format
+        payload = {
+            "messages": conversation_messages,
             "inferenceConfig": {
                 "temperature": request.temperature,
                 "maxTokens": request.max_tokens or default_config.default_max_tokens,
             },
         }
+        
+        # Add system field if present
+        if system_content:
+            payload["system"] = [{"text": system_content}]
+        
+        return payload
 
 
 class ResponseParser:
@@ -601,14 +604,17 @@ class LLMClient:
         except Exception as e:
             raise AuthenticationError(f"Failed to create Bedrock client: {e}")
 
-        # Invoke model
-        try:
-            response = bedrock_client.invoke_model(
+        # Invoke model - offload blocking boto3 call to thread pool
+        def _sync_invoke():
+            return bedrock_client.invoke_model(
                 modelId=bedrock_model,
                 contentType="application/json",
                 accept="application/json",
                 body=json.dumps(formatted)
             )
+
+        try:
+            response = await asyncio.to_thread(_sync_invoke)
         except Exception as e:
             error_msg = str(e)
             if "AccessDenied" in error_msg or "UnauthorizedException" in error_msg:
@@ -765,14 +771,17 @@ class LLMClient:
         except Exception as e:
             raise AuthenticationError(f"Failed to create Bedrock client: {e}")
 
-        # Invoke model with streaming
-        try:
-            response = bedrock_client.invoke_model_with_response_stream(
+        # Invoke model with streaming - offload blocking call to thread pool
+        def _sync_stream():
+            return bedrock_client.invoke_model_with_response_stream(
                 modelId=bedrock_model,
                 contentType="application/json",
                 accept="application/json",
                 body=json.dumps(formatted)
             )
+
+        try:
+            response = await asyncio.to_thread(_sync_stream)
         except Exception as e:
             error_msg = str(e)
             if "AccessDenied" in error_msg or "UnauthorizedException" in error_msg:
@@ -782,12 +791,16 @@ class LLMClient:
             else:
                 raise LLMError(f"Bedrock streaming error: {error_msg}")
 
-        # Process streaming response
+        # Process streaming response - iterate chunks
+        # Note: The response body iterator itself is synchronous; yield each chunk
+        # as it arrives to allow other coroutines to run between chunks
         for event in response["body"]:
             chunk_data = event
             chunk = self.parser.parse_stream_bedrock(chunk_data)
             if chunk:
+                # Yield control to event loop between chunks
                 yield chunk
+                await asyncio.sleep(0)
 
     async def close(self) -> None:
         """Close the HTTP client."""

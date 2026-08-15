@@ -196,7 +196,7 @@ class TestBedrockProvider:
         assert bedrock_config.bedrock_settings["aws_region"] == "us-east-1"
 
     def test_bedrock_format_request(self, bedrock_client):
-        """Test Bedrock request formatting."""
+        """Test Bedrock request formatting using Nova standard message format."""
         from backend.ai.llm import LLMRequest
 
         request = LLMRequest(
@@ -213,7 +213,33 @@ class TestBedrockProvider:
         # Verify request structure for Nova models
         assert "messages" in formatted
         assert "inferenceConfig" in formatted
+        assert "system" in formatted  # System field present
         assert formatted["inferenceConfig"]["temperature"] == 0.7
+        # Verify system prompt is in system field
+        assert len(formatted["system"]) == 1
+        assert formatted["system"][0]["text"] == "You are a helpful assistant"
+        # Verify user message
+        assert len(formatted["messages"]) == 1
+        assert formatted["messages"][0]["role"] == "user"
+        assert formatted["messages"][0]["content"][0]["text"] == "Hello, how are you?"
+
+    def test_bedrock_format_request_no_system(self, bedrock_client):
+        """Test Bedrock formatting without system prompt."""
+        from backend.ai.llm import LLMRequest
+
+        request = LLMRequest(
+            messages=[
+                Message(role=MessageRole.USER, content="Hello"),
+            ],
+            model="amazon.nova-micro-v1:0",
+            temperature=0.5,
+        )
+
+        formatted = bedrock_client.formatter.format_bedrock(request)
+
+        # No system field when no system message
+        assert "system" not in formatted
+        assert len(formatted["messages"]) == 1
 
     def test_bedrock_parse_response(self, bedrock_client):
         """Test Bedrock response parsing."""
@@ -326,12 +352,6 @@ class TestBedrockProvider:
         )
         assert config.api_key is None
         assert config.bedrock_settings["bedrock_model_id"] == "amazon.nova-micro-v1:0"
-
-    def test_bedrock_error_handling_import(self, bedrock_client):
-        """Test that boto3 import error is handled."""
-        with patch.dict("sys.modules", {"boto3": None}):
-            # The import will fail gracefully with a clear error message
-            pass  # Import happens at call time, not initialization
 
 
 class TestBedrockIntegration:
@@ -457,6 +477,167 @@ class TestBedrockIntegration:
         response_data["stopReason"] = "max_tokens"
         parsed = bedrock_client.parser.parse_bedrock(response_data, "amazon.nova-micro-v1:0")
         assert parsed.finish_reason == "max_tokens"
+
+    @pytest.mark.asyncio
+    async def test_complete_bedrock_with_mocked_boto3(self, bedrock_client):
+        """Test _complete_bedrock with mocked boto3 client."""
+        import json
+        import io
+        
+        # Create mock response body
+        response_body = json.dumps({
+            "output": {
+                "message": {
+                    "content": [{"text": "Test response"}]
+                }
+            },
+            "usage": {
+                "inputTokens": 10,
+                "outputTokens": 5,
+                "totalTokens": 15,
+            },
+            "stopReason": "end_turn",
+        }).encode("utf-8")
+        
+        # Create mock response
+        mock_response = MagicMock()
+        mock_response.__getitem__ = lambda self, key: {
+            "body": io.BytesIO(response_body),
+        }.get(key)
+        
+        # Create mock boto3 client
+        mock_boto3_client = MagicMock()
+        # Make invoke_model return our mock response (wrapped in lambda for thread execution)
+        def sync_invoke(**kwargs):
+            return mock_response
+        mock_boto3_client.invoke_model = sync_invoke
+        
+        # Patch boto3.client to return our mock client
+        with patch("boto3.client", return_value=mock_boto3_client):
+            response = await bedrock_client.complete(
+                messages=[Message(role=MessageRole.USER, content="Hello")]
+            )
+            
+            # Verify response was parsed correctly
+            assert response.content == "Test response"
+            assert response.usage["total_tokens"] == 15
+            assert response.model == "amazon.nova-micro-v1:0"
+
+    @pytest.mark.asyncio
+    async def test_complete_bedrock_uses_to_thread(self, bedrock_client):
+        """Test that _complete_bedrock offloads boto3 call to thread pool."""
+        import json
+        import io
+        
+        # Create mock response
+        response_body = json.dumps({
+            "output": {
+                "message": {
+                    "content": [{"text": "Test"}]
+                }
+            },
+            "usage": {"inputTokens": 1, "outputTokens": 1, "totalTokens": 2},
+            "stopReason": "end_turn",
+        }).encode("utf-8")
+        
+        mock_response = MagicMock()
+        mock_response.__getitem__ = lambda self, key: {
+            "body": io.BytesIO(response_body),
+        }.get(key)
+        
+        mock_boto3_client = MagicMock()
+        mock_boto3_client.invoke_model = lambda **kwargs: mock_response
+        
+        # Track if asyncio.to_thread was used
+        to_thread_called = False
+        original_to_thread = asyncio.to_thread
+        
+        async def mock_to_thread(func, *args, **kwargs):
+            nonlocal to_thread_called
+            to_thread_called = True
+            return func(*args, **kwargs)
+        
+        with patch("boto3.client", return_value=mock_boto3_client), \
+             patch("asyncio.to_thread", mock_to_thread):
+            await bedrock_client.complete(
+                messages=[Message(role=MessageRole.USER, content="Hello")]
+            )
+        
+        assert to_thread_called, "asyncio.to_thread should be used for boto3 call"
+
+    @pytest.mark.asyncio
+    async def test_stream_complete_bedrock_with_mocked_boto3(self, bedrock_client):
+        """Test _stream_complete_bedrock with mocked boto3 client."""
+        import json
+        
+        # Create mock streaming response
+        chunk1 = json.dumps({"text": "Hello"}).encode("utf-8")
+        chunk2 = json.dumps({"text": " world"}).encode("utf-8")
+        
+        mock_stream = iter([
+            {"chunk": {"bytes": chunk1}},
+            {"chunk": {"bytes": chunk2}},
+        ])
+        
+        mock_response = MagicMock()
+        mock_response.__getitem__ = lambda self, key: {
+            "body": mock_stream,
+        }.get(key)
+        
+        mock_boto3_client = MagicMock()
+        
+        def sync_stream(**kwargs):
+            return mock_response
+        mock_boto3_client.invoke_model_with_response_stream = sync_stream
+        
+        chunks = []
+        with patch("boto3.client", return_value=mock_boto3_client), \
+             patch("asyncio.to_thread", side_effect=lambda f, *a, **k: f(*a, **k)):
+            async for chunk in bedrock_client.stream_complete(
+                messages=[Message(role=MessageRole.USER, content="Hello")]
+            ):
+                chunks.append(chunk)
+        
+        assert len(chunks) >= 1
+        # At least one chunk should have content
+        assert any(c.content for c in chunks)
+
+    @pytest.mark.asyncio
+    async def test_complete_bedrock_auth_error(self, bedrock_client):
+        """Test Bedrock authentication error handling."""
+        from backend.ai.llm import AuthenticationError
+        import sys
+        
+        # Use error message that matches the AccessDenied check
+        def sync_call_that_fails(**kwargs):
+            raise Exception("AccessDeniedException: User is not authorized to access this resource")
+        
+        mock_boto3_client = MagicMock()
+        mock_boto3_client.invoke_model = sync_call_that_fails
+        
+        mock_boto3 = MagicMock()
+        mock_boto3.client.return_value = mock_boto3_client
+        
+        # Remove boto3 from sys.modules to force re-import
+        original_boto3 = sys.modules.get("boto3")
+        try:
+            if "boto3" in sys.modules:
+                del sys.modules["boto3"]
+            # Also remove any submodules
+            for key in list(sys.modules.keys()):
+                if key.startswith("boto3."):
+                    del sys.modules[key]
+            
+            with patch.dict("sys.modules", {"boto3": mock_boto3}), \
+                 patch("asyncio.to_thread", side_effect=lambda f, *a, **k: f(*a, **k)):
+                with pytest.raises(AuthenticationError):
+                    await bedrock_client.complete(
+                        messages=[Message(role=MessageRole.USER, content="Hello")]
+                    )
+        finally:
+            # Restore original boto3
+            if original_boto3:
+                sys.modules["boto3"] = original_boto3
 
 
 if __name__ == "__main__":
