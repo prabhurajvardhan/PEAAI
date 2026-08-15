@@ -110,12 +110,21 @@ alembic upgrade head && uvicorn backend.api.main:app --host 0.0.0.0 --port $PORT
 
 ## Frontend Deployment (Vercel)
 
-### 1. Create Vercel Project
+> ⚠️ **Important**: The frontend build pipeline is **NOT yet wired** in V0.1. The `src/app` module currently lacks:
+> - A `vite.config.ts` file
+> - A `build` script in `package.json`
+> - Required build dependencies
+>
+> Before deploying to Vercel, the frontend build must be set up by the app-shell owner (M01/UI-009). This documentation will be updated once the build pipeline is in place.
+>
+> For now, you can use **static hosting** of existing `src/app/dist` if available, or deploy the app locally for development.
+
+### 1. Create Vercel Project (Pending Build Pipeline)
 
 1. Log in to [Vercel Dashboard](https://vercel.com/dashboard)
 2. Click **Add New** → **Project**
 3. Import your GitHub repository
-4. Configure the project:
+4. Configure the project (once build pipeline is ready):
 
 | Setting | Value |
 |---------|-------|
@@ -131,18 +140,19 @@ Configure in Vercel:
 
 | Variable | Value |
 |----------|-------|
-| `VITE_API_URL` | `https://your-backend.onrender.com` |
+| `VITE_API_URL` | `https://your-backend.onrender.com/api/v1` |
 
-**Note**: The frontend expects the backend URL without `/api/v1` suffix. The API calls append `/api/v1` automatically.
+> **Important**: The `VITE_API_URL` MUST include the `/api/v1` suffix. The backend mounts API routes at `/api/v1/*`. For example:
+> - Local: `http://localhost:8000/api/v1`
+> - Staging: `https://your-backend.onrender.com/api/v1`
 
 ### 3. Vercel Configuration
 
 The `vercel.json` file at the repository root configures:
-- Build command
-- Output directory
-- Rewrite rules for API and WebSocket proxying
+- Rewrite rules for API proxying
+- Environment variable references
 
-Update `vercel.json` with your actual Render backend URL before deployment:
+Update the rewrite destination in `vercel.json` with your actual Render backend URL:
 
 ```json
 {
@@ -155,10 +165,12 @@ Update `vercel.json` with your actual Render backend URL before deployment:
 }
 ```
 
+> **Note**: Replace `https://your-backend.onrender.com` with your actual Render backend URL before deployment.
+
 ### 4. Deploy
 
 1. Click **Deploy**
-2. Vercel will build and deploy the application
+2. Vercel will build and deploy the application (once build pipeline is ready)
 3. Access at `https://your-app.vercel.app`
 
 ---
@@ -229,6 +241,10 @@ The backend defaults to `InMemorySessionStore` if Redis is not configured. For s
 No frontend WebSocket client implementation exists in V0.1. The backend exposes:
 - `/ws/` - General WebSocket endpoint
 - `/ws/chat/{room_id}` - Chat room WebSocket
+
+**WebSocket Routing**: Vercel rewrites do NOT support WebSocket connections. For staging WebSocket:
+1. Configure `VITE_WS_URL=wss://your-backend.onrender.com/ws` in frontend environment
+2. Frontend connects directly to Render WebSocket endpoint (not through Vercel)
 
 Frontend WebSocket integration requires additional development.
 

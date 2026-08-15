@@ -1,16 +1,9 @@
 {
-  "buildCommand": "cd src/app && npm install && npm run build",
-  "outputDirectory": "src/app/dist",
   "installCommand": "npm install",
-  "framework": "null",
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "https://your-backend.onrender.com/api/:path*"
-    },
-    {
-      "source": "/ws/:path*",
-      "destination": "https://your-backend.onrender.com/ws/:path*"
     }
   ],
   "env": {
