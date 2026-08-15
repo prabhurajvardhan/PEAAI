@@ -30,4 +30,4 @@ redis>=5.0.0
 # File storage
 aiofiles>=23.2.0
 python-multipart>=0.0.6
-magic>=0.4.27
+python-magic>=0.4.27
