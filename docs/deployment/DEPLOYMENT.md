@@ -168,10 +168,14 @@ Configure in Vercel:
 
 ### 3. Vercel Configuration
 
-`vercel.json` at the repository root declares the build command, output directory, and the
-`VITE_API_BASE_URL` env reference. There is **no API rewrite**: the frontend calls the
-Render backend directly over HTTPS via `VITE_API_BASE_URL` (the client appends `/api/v1`).
-A previous broken `your-backend.onrender.com` `/api` rewrite was removed.
+`vercel.json` at the repository root declares the build command, install command, and
+output directory. `VITE_API_BASE_URL` is **not** hardcoded in `vercel.json`; set it
+directly in the Vercel project **Settings → Environment Variables** (Production/Preview):
+`VITE_API_BASE_URL=https://peaai.onrender.com` (host only — no `/api/v1`).
+
+There is **no API rewrite**: the frontend calls the Render backend directly over HTTPS via
+`VITE_API_BASE_URL` (the client appends `/api/v1`). A previous broken
+`your-backend.onrender.com` `/api` rewrite was removed.
 
 ### 4. Deploy
 
