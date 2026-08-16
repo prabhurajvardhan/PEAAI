@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { TypingIndicator, TypingBubble, TypingDots } from '../typing/TypingIndicator';
 
 describe('TypingIndicator', () => {
@@ -37,8 +37,10 @@ describe('TypingIndicator', () => {
       const initialDots = container.querySelectorAll('span[aria-hidden="true"]');
       expect(initialDots.length).toBe(3);
 
-      // Advance time
-      vi.advanceTimersByTime(400);
+      // Fixed: Wrap timer advance in act() to prevent React warnings
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
       
       // Component should re-render with different active dot
       // The exact assertion depends on implementation

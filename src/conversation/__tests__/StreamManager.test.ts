@@ -5,12 +5,26 @@ describe('StreamManager', () => {
   let onToken: ReturnType<typeof vi.fn>;
   let onComplete: ReturnType<typeof vi.fn>;
   let onError: ReturnType<typeof vi.fn>;
+  // Track all instances for cleanup
+  const instances: StreamManager[] = [];
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
     onToken = vi.fn();
     onComplete = vi.fn();
     onError = vi.fn();
+  });
+
+  afterEach(() => {
+    // Fixed: Clean up all StreamManager instances to prevent memory leaks
+    // and pending setTimeout callbacks from affecting other tests
+    instances.forEach(instance => {
+      instance.destroy();
+    });
+    instances.length = 0;
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   describe('Initialization', () => {
@@ -19,6 +33,7 @@ describe('StreamManager', () => {
         messageId: 'test-123',
         bufferSize: 5,
       });
+      instances.push(manager);
 
       expect(manager.getState().messageId).toBe('test-123');
       expect(manager.isActive()).toBe(true);
@@ -28,6 +43,7 @@ describe('StreamManager', () => {
       const manager = new StreamManager({
         messageId: 'test-123',
       });
+      instances.push(manager);
 
       expect(manager.getState()).toMatchObject({
         messageId: 'test-123',
