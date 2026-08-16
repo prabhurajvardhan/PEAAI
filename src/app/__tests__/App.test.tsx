@@ -10,7 +10,7 @@ import React from 'react';
 vi.mock('../../foundation', () => ({}));
 
 describe('App bootstrap lifecycle (success path)', () => {
-  it('mounts the provider tree and transitions from the loading screen to the main UI', async () => {
+  it('mounts the provider tree and transitions from the loading screen to the application shell', async () => {
     const { App } = await import('../App');
     render(<App />);
 
@@ -18,13 +18,17 @@ describe('App bootstrap lifecycle (success path)', () => {
     expect(screen.getByText('Initializing PEAAI...')).toBeInTheDocument();
 
     // After the async initialization in AppProviders runs, onReady() fires and
-    // isLoading flips to false, revealing the main application UI.
+    // isLoading flips to false, revealing the real PEAAI application shell
+    // (HomeLayout: sidebar navigation + companion canvas + chat). The loading
+    // screen must be gone.
     await waitFor(() => {
-      expect(screen.getByText('Welcome to the AI Companion experience.')).toBeInTheDocument();
+      expect(screen.queryByText('Initializing PEAAI...')).not.toBeInTheDocument();
     });
 
-    // The loading screen must be gone once initialized.
-    expect(screen.queryByText('Initializing PEAAI...')).not.toBeInTheDocument();
+    // The real application shell is rendered: the home layout header title and
+    // the sidebar navigation (Main navigation region) must be present.
+    expect(screen.getAllByText('PEAAI').length).toBeGreaterThan(0);
+    expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument();
   });
 
   it('does not stay on the loading screen indefinitely (no infinite bootstrap)', async () => {

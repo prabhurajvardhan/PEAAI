@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { HomeLayout, HomeChatPanel } from '../../layouts/home';
+import { useAppContext } from '../../app/providers';
 
 interface Message {
   id: string;
@@ -18,10 +19,14 @@ export function HomePage() {
     messages: [],
     isTyping: false,
   });
+  const { setCurrentRoute } = useAppContext();
 
-  const handleNavigate = useCallback((route: string) => {
-    console.log('Navigate to:', route);
-  }, []);
+  const handleNavigate = useCallback(
+    (route: string) => {
+      setCurrentRoute(route);
+    },
+    [setCurrentRoute]
+  );
 
   const handleSendMessage = useCallback((content: string) => {
     const userMessage: Message = {

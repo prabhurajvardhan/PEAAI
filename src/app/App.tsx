@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { ThemeProvider } from '../foundation/theme';
 import { ToastProvider } from '../foundation/components/toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingScreen } from './components/LoadingScreen';
 import { AppProviders } from './providers';
+import { AppShell } from './AppShell';
 import type { AppState } from './types';
 
 const initialState: AppState = {
@@ -67,20 +68,7 @@ export function App() {
             {appState.isLoading ? (
               <LoadingScreen message="Initializing PEAAI..." />
             ) : (
-              <div
-                style={{
-                  minHeight: '100vh',
-                  backgroundColor: 'var(--color-background)',
-                  color: 'var(--color-text-primary)',
-                }}
-              >
-                {/* Main application content will be rendered here */}
-                {/* Routes and pages will be integrated by UI-004 */}
-                <main style={{ padding: '2rem' }}>
-                  <h1>PEAAI - AI Companion</h1>
-                  <p>Welcome to the AI Companion experience.</p>
-                </main>
-              </div>
+              <AppShell />
             )}
           </AppProviders>
         </ToastProvider>

@@ -19,6 +19,13 @@ export default defineConfig({
         replacement: path.resolve(__dirname, '../foundation/index.ts'),
       },
     ],
+    // The app module ships its own node_modules/react, while the pages/layout
+    // modules it now composes (src/pages/*, src/layouts/*) resolve react from
+    // the repository root. Without dedupe the shell crosses two React
+    // instances and throws "Invalid hook call" / "Cannot read properties of
+    // null (reading 'useState')". Bundle a single React instance (mirrors the
+    // production vite.config.ts).
+    dedupe: ['react', 'react-dom'],
   },
   test: {
     globals: true,
