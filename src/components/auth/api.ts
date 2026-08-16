@@ -11,17 +11,31 @@ import type {
   AuthResponse,
 } from './types';
 
-// Use environment variable or default API URL
+// API Prefix - the frontend client adds this to VITE_API_BASE_URL
+const API_PREFIX = '/api/v1';
+
+// Get API base URL from environment variable
 const getApiBaseUrl = (): string => {
   // Check for Vite environment variable
-  if (typeof process !== 'undefined' && process.env?.VITE_API_URL) {
-    return process.env.VITE_API_URL;
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
   }
-  // Default API URL for development
-  return '/api/v1';
+  
+  // Check for Node environment
+  if (typeof process !== 'undefined' && process.env?.VITE_API_BASE_URL) {
+    return process.env.VITE_API_BASE_URL;
+  }
+  
+  // Default API URL for local development
+  return 'http://localhost:8000';
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
+// Build full URL with API prefix
+const buildApiUrl = (path: string): string => {
+  return `${API_BASE_URL}${API_PREFIX}${path}`;
+};
 
 export class AuthApiError extends Error {
   constructor(
@@ -63,7 +77,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export async function login(credentials: LoginCredentials): Promise<AuthTokens> {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  const response = await fetch(buildApiUrl('/auth/login'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -75,7 +89,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthTokens> 
 }
 
 export async function register(data: RegistrationData): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+  const response = await fetch(buildApiUrl('/auth/register'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -90,7 +104,7 @@ export async function logout(): Promise<void> {
   const token = localStorage.getItem('accessToken');
   if (!token) return;
 
-  const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+  const response = await fetch(buildApiUrl('/auth/logout'), {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -101,7 +115,7 @@ export async function logout(): Promise<void> {
 }
 
 export async function refreshToken(refreshToken: string): Promise<AuthTokens> {
-  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+  const response = await fetch(buildApiUrl('/auth/refresh'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -113,7 +127,7 @@ export async function refreshToken(refreshToken: string): Promise<AuthTokens> {
 }
 
 export async function requestPasswordReset(data: PasswordResetRequest): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/auth/password-reset`, {
+  const response = await fetch(buildApiUrl('/auth/password-reset'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -128,7 +142,7 @@ export async function confirmPasswordReset(
   token: string,
   newPassword: string
 ): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/auth/password-reset/confirm`, {
+  const response = await fetch(buildApiUrl('/auth/password-reset/confirm'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -148,7 +162,7 @@ export async function getCurrentUser(): Promise<{ user: { id: string; email: str
     throw new AuthApiError('UNAUTHORIZED', 'Not authenticated', 401);
   }
 
-  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+  const response = await fetch(buildApiUrl('/auth/me'), {
     headers: {
       'Authorization': `Bearer ${token}`,
     },
