@@ -110,29 +110,46 @@ alembic upgrade head && uvicorn backend.api.main:app --host 0.0.0.0 --port $PORT
 
 ## Frontend Deployment (Vercel)
 
-> ⚠️ **Important**: The frontend build pipeline is **NOT yet wired** in V0.1. The `src/app` module currently lacks:
-> - A `vite.config.ts` file
-> - A `build` script in `package.json`
-> - Required build dependencies
->
-> Before deploying to Vercel, the frontend build must be set up by the app-shell owner (M01/UI-009). This documentation will be updated once the build pipeline is in place.
->
-> For now, you can use **static hosting** of existing `src/app/dist` if available, or deploy the app locally for development.
+> The PEAAI root frontend production build is established by FE-010 (T-FE-010-001).
+> The build is a Vite production build run from the repository root.
 
-### 1. Create Vercel Project (Pending Build Pipeline)
+### Architecture
+
+```
+Browser → index.html → src/main.tsx → src/App.tsx → existing PEAAI modules
+```
+
+The application shell is UI-009's `src/app/` (`index.html` + `main.tsx` + `App.tsx`),
+reused in place. The root `vite.config.ts` points Vite's `root` at `src/app` so the
+existing `src/app/index.html` (which references `./main.tsx`) is the build entry, and
+emits the production output to the repository-root `dist/`.
+
+- **Build tool:** Vite (`vite build`) with `@vitejs/plugin-react`.
+- **Runtime deps** (`react`, `react-dom`) are declared in the root `package.json` so every
+  module reachable from the entry resolves React during bundling. Module-local test
+  configurations (AD-010) are untouched.
+- **TypeScript validation** is a separate, non-blocking step: `npm run typecheck`
+  (`tsc --noEmit -p tsconfig.build.json`) type-checks the application entry surface only.
+  It does **not** run as part of `npm run build` (Vite/esbuild transpiles without
+  type-checking), so genuine module-level type defects in modules FE-010 does not own do
+  not block the production build. See "Known type-check findings" below.
+
+### 1. Create Vercel Project
 
 1. Log in to [Vercel Dashboard](https://vercel.com/dashboard)
 2. Click **Add New** → **Project**
 3. Import your GitHub repository
-4. Configure the project (once build pipeline is ready):
+4. Configure the project:
 
 | Setting | Value |
 |---------|-------|
 | **Framework Preset** | `Other` |
-| **Root Directory** | `.` (root) |
-| **Build Command** | `cd src/app && npm install && npm run build` |
-| **Output Directory** | `src/app/dist` |
-| **Install Command** | `npm install` |
+| **Root Directory** | `.` (repository root) |
+| **Install Command** | `npm install` (or `npm ci`) |
+| **Build Command** | `npm run build` |
+| **Output Directory** | `dist` |
+
+These are also encoded in `vercel.json` (`buildCommand`, `outputDirectory`, `installCommand`).
 
 ### 2. Environment Variables
 
@@ -140,38 +157,44 @@ Configure in Vercel:
 
 | Variable | Value |
 |----------|-------|
-| `VITE_API_URL` | `https://your-backend.onrender.com/api/v1` |
+| `VITE_API_BASE_URL` | `https://peaai.onrender.com` |
 
-> **Important**: The `VITE_API_URL` MUST include the `/api/v1` suffix. The backend mounts API routes at `/api/v1/*`. For example:
-> - Local: `http://localhost:8000/api/v1`
-> - Staging: `https://your-backend.onrender.com/api/v1`
+> **Important — host only, no `/api/v1` suffix.** The API client
+> (`src/services/api-config.ts`) reads `VITE_API_BASE_URL` as the backend **host** and
+> appends `/api/v1` structurally itself (`API_PREFIX = /api/v1`). Do **not** include
+> `/api/v1` in the env var. Example:
+> - Local: `VITE_API_BASE_URL=http://localhost:8000` → client calls `http://localhost:8000/api/v1`
+> - Production: `VITE_API_BASE_URL=https://peaai.onrender.com` → client calls `https://peaai.onrender.com/api/v1`
 
 ### 3. Vercel Configuration
 
-The `vercel.json` file at the repository root configures:
-- Rewrite rules for API proxying
-- Environment variable references
-
-Update the rewrite destination in `vercel.json` with your actual Render backend URL:
-
-```json
-{
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://your-actual-backend.onrender.com/api/:path*"
-    }
-  ]
-}
-```
-
-> **Note**: Replace `https://your-backend.onrender.com` with your actual Render backend URL before deployment.
+`vercel.json` at the repository root declares the build command, output directory, and the
+`VITE_API_BASE_URL` env reference. There is **no API rewrite**: the frontend calls the
+Render backend directly over HTTPS via `VITE_API_BASE_URL` (the client appends `/api/v1`).
+A previous broken `your-backend.onrender.com` `/api` rewrite was removed.
 
 ### 4. Deploy
 
 1. Click **Deploy**
-2. Vercel will build and deploy the application (once build pipeline is ready)
-3. Access at `https://your-app.vercel.app`
+2. Vercel runs `npm install` → `npm run build` (Vite) → serves `dist/`
+3. Access at `https://<your-app>.vercel.app`
+
+### Known type-check findings (category-B, reported to CA)
+
+`npm run typecheck` surfaces genuine module-level defects that FE-010 does **not** own and
+did **not** modify (per the FE-010 scope rules). These are reported to the CA for routing
+to the owning employees:
+
+- `src/app/providers/AppProviders.tsx` — `import('../foundation')` references a
+  `src/foundation/` root barrel (`index.ts`) that UI-001 never created. The root Vite
+  config ships a temporary, behavior-preserving build shim (`foundationEmptyBarrelPlugin`)
+  so the production build succeeds; the correct fix is for UI-001 to create
+  `src/foundation/index.ts`.
+- `src/foundation/theme/ThemeToggle.tsx` — `position` style typing + unused `React` import.
+- `src/app/App.tsx`, `src/app/components/{ErrorBoundary,LoadingScreen}.tsx` — unused
+  `import React` (harmless under `react-jsx`, but flagged by `noUnusedLocals`).
+
+These do not block `npm run build` or Vercel deployment.
 
 ---
 
@@ -188,7 +211,7 @@ Update the rewrite destination in `vercel.json` with your actual Render backend 
 
 ### Frontend (Vercel)
 
-- [ ] `VITE_API_URL` set to Render backend URL
+- [ ] `VITE_API_BASE_URL` set to Render backend host (e.g. `https://peaai.onrender.com` — no `/api/v1`)
 - [ ] Build successful
 - [ ] Application loads without errors
 
@@ -212,7 +235,7 @@ Update the rewrite destination in `vercel.json` with your actual Render backend 
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `VITE_API_URL` | ✅ | `/api/v1` | Backend API base URL |
+| `VITE_API_BASE_URL` | ✅ | `http://localhost:8000` | Backend API host (client appends `/api/v1`) |
 
 ---
 
@@ -286,12 +309,12 @@ cd backend
 uvicorn backend.api.main:app --reload
 
 # Terminal 2: Start frontend (development)
-cd src/app
 npm install
 npm run dev
 ```
 
-Set `VITE_API_URL=http://localhost:8000` for local development.
+Set `VITE_API_BASE_URL=http://localhost:8000` for local development (host only; the
+client appends `/api/v1`).
 
 ---
 

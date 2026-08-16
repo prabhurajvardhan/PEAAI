@@ -35,17 +35,26 @@ The reliable gating signal in V0.1. `backend/ai` is the only fully-implemented b
 
 - Node 20 LTS (vitest requires `^18 || >=20`; Node 20 is the safe LTS on GitHub-hosted runners).
 - `npm ci` using the tracked root `package-lock.json` (lockfile v3).
-- `npm run build` (`tsc`) — **diagnostic / `continue-on-error`**.
-- `npm run lint` (`eslint src --ext .ts`) — **diagnostic / `continue-on-error`**.
+- `npm run build` — now a **Vite production build** (`vite build`) established by FE-010
+  (T-FE-010-001). The root `vite.config.ts` points Vite at UI-009's `src/app/index.html`
+  as the entry and emits `dist/`. The build succeeds (produces `dist/index.html` + JS/CSS
+  assets). The job remains `continue-on-error: true` (diagnostic) until the CA promotes it
+  to gating; the `lint` step still fails because eslint is not installed/configured.
+- `npm run lint` (`eslint src --ext .ts`) — **diagnostic / `continue-on-error`** (eslint is
+  not a dependency and no eslint config exists in V0.1).
 
-**Why non-gating:** these are V0.1-known repository misconfigurations, surfaced (not hidden) by CI:
+**Build pipeline (FE-010, T-FE-010-001):**
 
-| Command | V0.1 status | Root cause |
-|---------|-------------|------------|
-| `npm run build` | fails | Root `tsconfig.json` has no `jsx`, and several barrel `.ts` files re-export `.tsx`; the `transition` module has pre-existing type errors (null checks, `import type` used as value, missing `../event-bus`). Per the AD-010 module-local-config convention the root config is intentionally minimal — frontend builds are module-local, not root-level. |
-| `npm run lint` | fails | `eslint` is referenced by the `lint` script but is **not** a dependency in root `package.json`, and no eslint config file exists. |
+| Command | V0.1 status | Notes |
+|---------|-------------|-------|
+| `npm run build` | ✅ passes (Vite) | `vite build` → `dist/`. Was `tsc` (failed, 142 errors); now a real production bundle. |
+| `npm run typecheck` | diagnostic | `tsc --noEmit -p tsconfig.build.json` — scoped to the app entry surface; surfaces genuine category-B module defects (reported to CA), not run as part of `build`. |
+| `npm run lint` | fails | eslint not installed/configured — unchanged V0.1 gap. |
 
-Each step runs and its real pass/fail is shown as a warning on the PR. Flip to gating once a root build config and eslint are added.
+**Why still non-gating:** the `lint` step is still V0.1-known-broken (no eslint). The `build`
+step is now green. The CA may promote the build step to gating (remove its step-level
+`continue-on-error`) once verified on a PR; the lint step stays diagnostic until eslint is
+added. FE-010 did **not** modify `.github/workflows/ci.yml` (gating policy is the CA's call).
 
 ### 3. `frontend-root-tests` — root unit tests under JEST (GATING)
 
@@ -141,9 +150,12 @@ Every failed check from the CI runs on PR #27 was inspected from the GitHub Acti
 | Fix | (1) Added `jsdom` to `src/app/package.json` devDependencies. (2) No code fix — documented. The leg remains `allow_failure: true` so the failure stays visible. |
 | Test result | 4 suites / 24 tests pass; `ModuleIntegration.test.ts` fails (react resolution). Diagnostic, visible. |
 
-### Frontend build + lint (diagnostic) — unchanged, documented V0.1 misconfig
+### Frontend build + lint (diagnostic) — build fixed by FE-010, lint unchanged
 
-`npm run build` (tsc) and `npm run lint` (eslint) remain diagnostic: root `tsconfig.json` has no `jsx`, eslint is not installed/configured. These are pre-existing V0.1 misconfigurations surfaced (not hidden) by CI. No fix applied — they require root build/lint setup, which is a separate task.
+`npm run build` is now a Vite production build (FE-010, T-FE-010-001) and passes,
+producing `dist/`. `npm run lint` (eslint) remains diagnostic: eslint is not
+installed/configured. The build step's `continue-on-error` is left in place for the CA to
+remove (promote to gating) after verification; FE-010 did not modify the workflow file.
 
 ## What the CI does NOT do
 
@@ -177,10 +189,19 @@ Each diagnostic job/step has a `continue-on-error: true` and an inline comment e
 pip install -r backend/requirements.txt httpx pytest pytest-asyncio pytest-cov
 pytest backend/ --cov=backend --cov-report=term-missing -q
 
-# Frontend root (jest, diagnostic)
+# Frontend production build (FE-010, T-FE-010-001) — Vite, produces dist/
 npm ci
-npm test -- --ci --reporters=default
+npm run build
+# Optional scoped type-check (diagnostic; surfaces category-B module defects)
+npm run typecheck
 
-# Frontend module (vitest, per module)
+# Frontend root (jest, gating) — 25 suites / 737 tests
+npm ci
+npx jest --ci --testPathIgnorePatterns="src/(app|conversation|companion|transition|integration)/"
+
+# Frontend root (vitest, gating) — companion + transition, 12 suites / 221 tests
+npx vitest run src/companion src/transition
+
+# Frontend module (vitest, per module — AD-010 module-local configs)
 cd src/foundation && npm install && npx vitest run
 ```
