@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { eventBus } from '../../integration/ModuleIntegration.tsx';
+import { describe, it, expect, vi } from 'vitest';
+import { eventBus } from '../ModuleIntegration.tsx';
 
 describe('EventBus', () => {
   it('allows subscribing to events', () => {
