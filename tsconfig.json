@@ -4,18 +4,15 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "noEmit": true,
     "types": ["jest", "node"]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "backend", "**/__tests__/**", "**/*.test.ts", "**/*.test.tsx", "**/test-setup.ts", "**/test-setup.tsx", "**/vitest.config.ts", "**/*.config.ts"]
 }
