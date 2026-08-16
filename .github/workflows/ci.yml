@@ -146,9 +146,11 @@ jobs:
 
       - name: Run jest suites (vitest-authored dirs ignored)
         # testPathIgnorePatterns excludes the vitest module dirs so jest runs
-        # only the 25 jest-compatible suites (animation, graphics, performance,
-        # story-viz). Verified: 25 suites / 737 tests pass.
-        run: npx jest --ci --testPathIgnorePatterns="src/(app|conversation|companion|transition)/"
+        # only the jest-compatible suites (animation, graphics, performance,
+        # story-viz). src/integration is a vitest module with its own dedicated
+        # "Frontend integration tests (vitest)" job (PR #36 / AD-010), so it is
+        # excluded here too. Verified: 25 suites / 737 tests pass.
+        run: npx jest --ci --testPathIgnorePatterns="src/(app|conversation|companion|transition|integration)/"
 
   # ---------------------------------------------------------------------------
   # Frontend - root unit tests under VITEST (gating)
@@ -188,12 +190,17 @@ jobs:
   # check for granular visibility on the PR.
   #
   # Gating policy is per-leg via `allow_failure`:
-  #   - foundation, components/landing: green -> gating (allow_failure: false).
-  #   - app, conversation: pre-existing V0.1 failures (see below) -> diagnostic
-  #     (allow_failure: true). The failures stay VISIBLE (red on the leg with
-  #     full logs); continue-on-error only prevents a pre-existing sibling
-  #     defect from blocking unrelated PRs. This is the documented-pre-existing
-  #     case, NOT a hidden/fixable failure. See docs/engineering/CI.md.
+  #   - foundation, components/landing, integration, conversation: green ->
+  #     gating (allow_failure: false). The conversation leg was promoted from
+  #     diagnostic to gating once its worker-OOM (infinite stream-loop in
+  #     useStreaming.test.ts) and per-file memory pressure were resolved
+  #     (singleFork in src/conversation/vitest.config.ts + terminating stream
+  #     mocks). See docs/engineering/CI.md.
+  #   - app: pre-existing V0.1 failures -> diagnostic (allow_failure: true).
+  #     The failures stay VISIBLE (red on the leg with full logs);
+  #     continue-on-error only prevents a pre-existing sibling defect from
+  #     blocking unrelated PRs. This is the documented-pre-existing case, NOT a
+  #     hidden/fixable failure. See docs/engineering/CI.md.
   # ---------------------------------------------------------------------------
   frontend-module-tests:
     name: Frontend ${{ matrix.module }} tests (vitest)
@@ -211,7 +218,7 @@ jobs:
             allow_failure: false
           - module: conversation
             path: src/conversation
-            allow_failure: true
+            allow_failure: false
           - module: app
             path: src/app
             allow_failure: true
