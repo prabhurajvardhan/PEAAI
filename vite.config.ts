@@ -1,41 +1,9 @@
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Temporary build shim for a category-B cross-module defect (T-FE-010-001):
-// UI-009's `src/app/providers/AppProviders.tsx` performs a best-effort
-// `import('../foundation')` to lazily initialize the M01 foundation, but
-// `src/foundation/` has no root barrel (`index.ts`) — UI-001 only ships the
-// sub-barrels `theme/`, `components/`, and `design-system/`. At runtime the
-// dynamic import is already designed to fail silently (it is discarded and
-// wrapped in `.catch(() => null)`), so resolving it to an empty module is
-// behavior-preserving. FE-010 owns the build infrastructure only and must not
-// modify `src/foundation/**` (UI-001) or `src/app/providers/AppProviders.tsx`
-// (UI-009); this shim lives in the root Vite config and is reported to the CA
-// for routing to UI-001 (create `src/foundation/index.ts`) / UI-009.
-const foundationEmptyBarrelPlugin: Plugin = {
-  name: 'peaai-foundation-empty-barrel-shim',
-  enforce: 'pre',
-  resolveId(source, importer) {
-    // Only intercept the exact unresolved foundation directory import emitted
-    // by UI-009's AppProviders. Legitimate sub-barrel imports
-    // (`../foundation/theme`, `../foundation/components/toast`, ...) resolve
-    // normally and are untouched.
-    if (source === '../foundation' && importer && importer.includes('src/app/providers/AppProviders.tsx')) {
-      return '\0peaai:foundation-empty';
-    }
-    return null;
-  },
-  load(id) {
-    if (id === '\0peaai:foundation-empty') {
-      return 'export {};\n';
-    }
-    return null;
-  },
-};
 
 // PEAAI root production build configuration.
 //
@@ -48,15 +16,45 @@ const foundationEmptyBarrelPlugin: Plugin = {
 // every module reachable from the entry — including those outside `src/app/`
 // (foundation, pages, layouts, ...) — resolves react during bundling. This does
 // not touch module-local test configuration (AD-010 isolation is preserved).
+//
+// Note: UI-009's AppProviders performs a best-effort lazy `import('../foundation')`
+// during bootstrap. That now resolves natively to `src/foundation/index.ts`
+// (the M01 root barrel), so no build shim is required.
 export default defineConfig({
-  plugins: [foundationEmptyBarrelPlugin, react()],
+  plugins: [react()],
   root: path.resolve(__dirname, 'src/app'),
   // Expose the repo root as an alias so module-local code that uses `@/...`
   // (the convention declared in module-local tsconfigs) resolves consistently.
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src/app'),
-    },
+    alias: [
+      {
+        // AppProviders (src/app/providers/) lazily `import('../../foundation')`
+        // during bootstrap. `src/foundation` is a workspace package whose
+        // package.json `main` points at a pre-built `dist/index.js` that does
+        // not exist in this monorepo (modules are consumed as source). Resolve
+        // the bare directory import to the source root barrel explicitly so
+        // Vite/rolldown bundles the TS source instead of failing on the
+        // missing `dist`. Narrow sub-barrel imports (`../foundation/theme`,
+        // `../foundation/components/toast`, ...) already resolve to source and
+        // are untouched.
+        find: /^..\/..\/foundation$/,
+        replacement: path.resolve(__dirname, 'src/foundation/index.ts'),
+      },
+      {
+        find: /^@\/$/,
+        replacement: path.resolve(__dirname, 'src/app'),
+      },
+      {
+        // `@/...` alias (convention declared in module-local tsconfigs).
+        find: /^@(.+)$/,
+        replacement: path.resolve(__dirname, 'src/app$1'),
+      },
+    ],
+    // The monorepo ships multiple physical copies of react/react-dom (root +
+    // module-local node_modules). Bundle a single instance to avoid the
+    // "Cannot read properties of null (reading 'useState')" hooks error caused
+    // by two React instances crossing a provider boundary.
+    dedupe: ['react', 'react-dom'],
   },
   build: {
     outDir: path.resolve(__dirname, 'dist'),

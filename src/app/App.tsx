@@ -27,33 +27,61 @@ export function App() {
   const handleError = useCallback((error: Error) => {
     setAppState((prev) => ({
       ...prev,
+      isLoading: false,
       error: error.message,
     }));
   }, []);
 
-  if (appState.isLoading) {
-    return <LoadingScreen message="Initializing PEAAI..." />;
+  const handleRetry = useCallback(() => {
+    setAppState(initialState);
+  }, []);
+
+  // Initialization-failure fallback: a recoverable error UI (never an infinite
+  // spinner). Rendered when a bootstrap error was reported via onError.
+  if (appState.error) {
+    return (
+      <div
+        role="alert"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          padding: '2rem',
+          textAlign: 'center',
+        }}
+      >
+        <h1>Unable to start PEAAI</h1>
+        <p>{appState.error}</p>
+        <button onClick={handleRetry}>Try Again</button>
+      </div>
+    );
   }
 
   return (
     <ErrorBoundary onError={handleError}>
       <ThemeProvider>
         <ToastProvider>
-          <AppProviders onReady={handleInitializationComplete}>
-            <div
-              style={{
-                minHeight: '100vh',
-                backgroundColor: 'var(--color-background)',
-                color: 'var(--color-text-primary)',
-              }}
-            >
-              {/* Main application content will be rendered here */}
-              {/* Routes and pages will be integrated by UI-004 */}
-              <main style={{ padding: '2rem' }}>
-                <h1>PEAAI - AI Companion</h1>
-                <p>Welcome to the AI Companion experience.</p>
-              </main>
-            </div>
+          <AppProviders onReady={handleInitializationComplete} onError={handleError}>
+            {appState.isLoading ? (
+              <LoadingScreen message="Initializing PEAAI..." />
+            ) : (
+              <div
+                style={{
+                  minHeight: '100vh',
+                  backgroundColor: 'var(--color-background)',
+                  color: 'var(--color-text-primary)',
+                }}
+              >
+                {/* Main application content will be rendered here */}
+                {/* Routes and pages will be integrated by UI-004 */}
+                <main style={{ padding: '2rem' }}>
+                  <h1>PEAAI - AI Companion</h1>
+                  <p>Welcome to the AI Companion experience.</p>
+                </main>
+              </div>
+            )}
           </AppProviders>
         </ToastProvider>
       </ThemeProvider>
